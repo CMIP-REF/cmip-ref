@@ -21,7 +21,10 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "ref-core"
+    "ref-core",
+    "xarray >= 2022",
+    "netcdf4",
+    "dask>=2024.10.0",
 ]
 
 [tool.uv]

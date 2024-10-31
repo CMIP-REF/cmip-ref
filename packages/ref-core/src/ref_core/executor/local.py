@@ -1,3 +1,8 @@
+from typing import Any
+
+from ref_core.metrics import Configuration, Metric, MetricResult, TriggerInfo
+
+
 class LocalExecutor:
     """
     Run a metric locally, in-process.
@@ -9,19 +14,26 @@ class LocalExecutor:
 
     name = "local"
 
-    def run_metric(self, metric, *args, **kwargs):  # type: ignore
+    def run_metric(
+        self, metric: Metric, configuration: Configuration, trigger: TriggerInfo | None, **kwargs: Any
+    ) -> MetricResult:
         """
         Run a metric in process
 
         Parameters
         ----------
         metric
-        args
+            Metric to run
+        configuration
+            Configuration to run the metric with
+        trigger
+            Information about the dataset that triggered the metric run
         kwargs
+            Additional keyword arguments for the executor
 
         Returns
         -------
         :
             Results from running the metric
         """
-        return metric.run(*args, **kwargs)
+        return metric.run(configuration=configuration, trigger=trigger)

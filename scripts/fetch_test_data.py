@@ -67,7 +67,7 @@ def queue_esgf_download(  # noqa: PLR0913
         ]
     )
 
-    res = subprocess.run(
+    subprocess.run(
         [
             "esgpull",
             "update",
@@ -78,7 +78,6 @@ def queue_esgf_download(  # noqa: PLR0913
         input=b"y",
         check=False,
     )
-    res.check_returncode()
 
     return search_tag
 

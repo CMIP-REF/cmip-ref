@@ -13,9 +13,11 @@ This is a placeholder implementation and will be expanded in the future.
 """
 
 import os
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
-from .local import LocalExecutor
+from ref_core.executor.local import LocalExecutor
+from ref_core.metrics import Configuration, Metric, MetricResult, TriggerInfo
+from ref_core.providers import MetricsProvider
 
 
 @runtime_checkable
@@ -33,11 +35,30 @@ class Executor(Protocol):
 
     name: str
 
-    def run_metric(self, metric: object, *args, **kwargs) -> object:  # type: ignore
+    def run_metric(
+        self, metric: Metric, configuration: Configuration, trigger: TriggerInfo | None, **kwargs: Any
+    ) -> MetricResult:
         """
         Execute a metric
+
+        Parameters
+        ----------
+        metric
+            Metric to run
+        configuration
+            Configuration to run the metric with
+        trigger
+            Information about the dataset that triggered the metric run
+
+            TODO: The optionality of this parameter is a placeholder and will be expanded in the future.
+        kwargs
+            Additional keyword arguments for the executor
+
+        Returns
+        -------
+        :
+            Results from running the metric
         """
-        # TODO: Add type hints for metric and return value in follow-up PR
         ...
 
 
@@ -94,7 +115,7 @@ register_executor = _default_manager.register
 get_executor = _default_manager.get
 
 
-def run_metric(metric_name: str, *args, **kwargs) -> object:  # type: ignore
+def run_metric(metric_name: str, /, metrics_provider: MetricsProvider, **kwargs: Any) -> MetricResult:
     """
     Run a metric using the default executor
 
@@ -107,13 +128,10 @@ def run_metric(metric_name: str, *args, **kwargs) -> object:  # type: ignore
     ----------
     metric_name
         Name of the metric to run.
-
-        Eventually the metric will be sourced from via some kind of registry.
-        For now, it's just a placeholder.
-    args
-        Extra arguments passed to the metric of interest
+    metrics_provider
+        Provider from where to retrieve the metric
     kwargs
-        Extra keyword arguments passed to the metric of interest
+        Additional options passed to the metric executor
 
     Returns
     -------
@@ -123,10 +141,14 @@ def run_metric(metric_name: str, *args, **kwargs) -> object:  # type: ignore
     executor_name = os.environ.get("CMIP_REF_EXECUTOR", "local")
 
     executor = get_executor(executor_name)
-    # metric = get_metric(metric_name)  # TODO: Implement this
-    metric = kwargs.pop("metric")
+    metric = metrics_provider.get(metric_name)
 
-    return executor.run_metric(metric, *args, **kwargs)
+    result = executor.run_metric(metric, trigger=None, **kwargs)
+
+    # TODO: Validate the result
+    # TODO: Log the result
+
+    return result
 
 
 register_executor(LocalExecutor())

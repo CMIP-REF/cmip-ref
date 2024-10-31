@@ -21,10 +21,12 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
+    "attrs"
 ]
 
 [tool.uv]
 dev-dependencies = [
+
 ]
 
 [build-system]
