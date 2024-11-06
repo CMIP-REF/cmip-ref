@@ -4,6 +4,8 @@ Interfaces for metrics providers.
 This defines how metrics packages interoperate with the REF framework.
 """
 
+from collections.abc import Iterator
+
 from ref_core.metrics import Metric
 
 
@@ -35,6 +37,9 @@ class MetricsProvider:
         if not isinstance(metric, Metric):
             raise ValueError("Metric must be an instance of Metric")
         self._metrics[metric.name.lower()] = metric
+
+    def __iter__(self) -> Iterator[Metric]:
+        return iter(self._metrics.values())
 
     def get(self, name: str) -> Metric:
         """

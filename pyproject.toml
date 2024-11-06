@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.10"
 dependencies = [
+    "ref-celery",
     "ref-core",
     "ref-metrics-example",
 ]
@@ -22,6 +23,8 @@ dependencies = [
 dev-dependencies = [
     "pytest>=7.3.1",
     "pytest-cov>=4.0.0",
+    "pytest-celery[redis]>=1.0.0",
+    "celery-types>=0.22.0",
     "coverage>=7.2.0",
     "mypy>=1.11.0",
     "ruff>=0.6.9",
@@ -36,12 +39,14 @@ dev-dependencies = [
     "mkdocs-material>=9.5.0",
     "mkdocs-gen-files>=0.5.0",
     "mkdocs-section-index>=0.3.9",
+    "mkdocs-literate-nav>=0.6.1",
     "mkdocs-autorefs>=1.0.1",
     "mkdocs-jupyter>=0.24.0",
     "myst-nb>=1.1.1",
     "jupyterlab>=4.2.0",
     "jupytext>=1.16.3",
     "esgpull>=0.7.3",
+    "notebook>=7",
 ]
 
 [tool.uv.workspace]
@@ -50,6 +55,7 @@ members = ["packages/*"]
 [tool.uv.sources]
 ref-core = { workspace = true }
 ref-metrics-example = { workspace = true }
+ref-celery = { workspace = true }
 
 [tool.coverage.run]
 source = ["packages"]

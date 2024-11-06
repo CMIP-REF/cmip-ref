@@ -34,6 +34,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+      - uses: ./.github/actions/test-data
       - name: docs
         run: uv run mkdocs build
 
@@ -58,23 +59,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       # Share a cache of test data across all test jobs
-      - name: Cache test data
-        id: cache-test-data
-        uses: actions/cache@v4
-        with:
-          path: .esgpull
-          key: test-data-${{ hashFiles('scripts/fetch_test_data.py') }}
-      - name: Install esgpull
-        run: |
-          uv run esgpull self install .esgpull || uv run esgpull self choose .esgpull
-      - if: ${{ steps.cache-test-data.outputs.cache-hit != 'true' }}
-        name: Fetch the test data
-        run: |
-          uv run esgpull config api.index_node esgf-node.llnl.gov
-          make fetch-test-data
+      - uses: ./.github/actions/test-data
+
+      # Run the tests
       - name: Run tests
         run: |
+          cp .env.example .env
           uv run --package ref-core pytest packages/ref-core -r a -v --doctest-modules --cov=packages/ref-core/src --cov-report=term
+          uv run --package ref-celery pytest packages/ref-celery -r a -v --doctest-modules --cov=packages/ref-celery/src --cov-report=term
           uv run --package ref-metrics-example pytest packages/ref-metrics-example -r a -v --doctest-modules --cov=packages/ref-metrics-example/src --cov-report=term --cov-append
           uv run coverage xml
           # Run integration tests (without adding to the coverage)

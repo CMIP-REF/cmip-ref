@@ -1,8 +1,10 @@
 import json
-import pathlib
+from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
 from attrs import frozen
+
+from ref_core.env import env
 
 
 @frozen
@@ -11,12 +13,56 @@ class Configuration:
     Configuration that describes the input data sources
     """
 
-    output_directory: pathlib.Path
+    output_fragment: Path
     """
-    Directory to write output files to
+    Directory to write output files to relative to the output root.
     """
 
     # TODO: Add more configuration options here
+
+    @staticmethod
+    def as_output_path(file_fragment: str | Path, ensure_parent_exists: bool = False) -> Path:
+        """
+        Get the output path for a file in the output directory.
+
+        Parameters
+        ----------
+        file_fragment
+            Relative path to a file with respect to the output directory.
+        ensure_parent_exists
+            Whether to create the parent directory if it does not exist.
+
+        Returns
+        -------
+        :
+            The path to the file in the output directory.
+        """
+        root_output_dir: Path = env.path("REF_OUTPUT_ROOT", Path("out"))
+
+        output_path = root_output_dir / file_fragment
+
+        if ensure_parent_exists:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+        return output_path
+
+    @staticmethod
+    def as_esgf_path(file_fragment: str | Path) -> Path:
+        """
+        Get the output path for a file in the output directory.
+
+        Parameters
+        ----------
+        file_fragment
+            Relative path to a file with respect to the esgf directory.
+
+        Returns
+        -------
+        :
+            The path to the file in the esgf directory.
+        """
+        root_output_dir: Path = env.path("REF_ESGF_ROOT", Path(".esgpull/data"))
+
+        return root_output_dir / file_fragment
 
 
 @frozen
@@ -30,7 +76,7 @@ class MetricResult:
 
     # Do we want to load a serialised version of the output bundle here or just a file path?
 
-    output_bundle: pathlib.Path | None
+    output_bundle: Path | None
     """
     Path to the output bundle file.
 
@@ -63,10 +109,15 @@ class MetricResult:
             A prepared MetricResult object.
             The output bundle will be written to the output directory.
         """
-        with open(configuration.output_directory / "output.json", "w") as file_handle:
+        with open(
+            configuration.as_output_path(
+                configuration.output_fragment / "output.json", ensure_parent_exists=True
+            ),
+            "w",
+        ) as file_handle:
             json.dump(cmec_output_bundle, file_handle)
         return MetricResult(
-            output_bundle=configuration.output_directory / "output.json",
+            output_bundle=configuration.output_fragment / "output.json",
             successful=True,
         )
 
@@ -77,7 +128,7 @@ class TriggerInfo:
     The reason why the metric was run.
     """
 
-    dataset: pathlib.Path
+    dataset: Path
     """
     Path to the dataset that triggered the metric run.
     """

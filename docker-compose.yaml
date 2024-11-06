@@ -1,0 +1,35 @@
+# Services to run the Rapid Evaluation Framework (REF)
+# These can be started by running `docker-compose up` in the root directory of the codebase.
+
+name: cmip-ref
+services:
+  redis:
+    image: redis:7
+    restart: always
+    ports:
+      - "6379:6379"
+  flower:
+    image: mher/flower
+    restart: always
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/1
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+  metrics-example:
+    image: ref-metrics-example
+    restart: always
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - REF_OUTPUT_ROOT=/output
+      - REF_ESGF_ROOT=/esgf
+    build:
+      context: packages/ref-metrics-example
+      additional_contexts:
+        - root=.
+    command: ref-celery --package ref-metrics-example
+    volumes:
+      - ./packages/ref-metrics-example:/app
+      - .esgpull/data:/esgf
+      - ./out:/output

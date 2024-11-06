@@ -30,6 +30,7 @@ pre-commit:  ## run all the linting checks of the codebase
 .PHONY: mypy
 mypy:  ## run mypy on the codebase
 	MYPYPATH=stubs uv run --package ref-core mypy packages/ref-core
+	MYPYPATH=stubs uv run --package ref-celery mypy packages/ref-celery
 	MYPYPATH=stubs uv run --package ref-metrics-example mypy packages/ref-metrics-example
 
 .PHONY: ruff-fixes
@@ -38,10 +39,16 @@ ruff-fixes:  ## fix the code using ruff
 	uv run ruff format
 
 .PHONY: test-core
-test-core:  ## run the tests
+test-core:  ## run the tests for ref-core
 	uv run --package ref-core \
 		pytest packages/ref-core \
 		-r a -v --doctest-modules --cov=packages/ref-core/src
+
+.PHONY: test-celery
+test-celery:  ## run the tests for ref-celery
+	uv run --package ref-celery \
+		pytest packages/ref-celery \
+		-r a -v --doctest-modules --cov=packages/ref-celery/src
 
 .PHONY: test-metrics-example
 test-metrics-example:  ## run the tests
@@ -56,7 +63,7 @@ test-integration:  ## run the integration tests
 		-r a -v
 
 .PHONY: test
-test: test-core test-metrics-example test-integration ## run the tests
+test: test-core test-celery test-metrics-example test-integration ## run the tests
 
 # Note on code coverage and testing:
 # If you want to debug what is going on with coverage, we have found
