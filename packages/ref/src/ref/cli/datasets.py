@@ -104,12 +104,16 @@ def list_columns(
 
 
 @app.command()
-def ingest(
+def ingest(  # noqa: PLR0913
     ctx: typer.Context,
     file_or_directory: Path,
-    source_type: SourceDatasetType = typer.Option(help="Type of source dataset"),
-    solve: bool = typer.Option(False, help="Run metrics after ingestion"),
-    dry_run: bool = typer.Option(False, help="Do not execute any metrics"),
+    source_type: Annotated[SourceDatasetType, typer.Option(help="Type of source dataset")],
+    solve: Annotated[bool, typer.Option(help="Solve for new metric executions after ingestion")] = False,
+    dry_run: Annotated[bool, typer.Option(help="Do not ingest datasets into the database")] = False,
+    n_jobs: Annotated[int | None, typer.Option(help="Number of jobs to run in parallel")] = None,
+    skip_invalid: Annotated[
+        bool, typer.Option(help="Ignore (but log) any datasets that don't pass validation")
+    ] = False,
 ) -> None:
     """
     Ingest a dataset
@@ -119,9 +123,15 @@ def ingest(
     config = ctx.obj.config
     db = ctx.obj.database
 
+    file_or_directory = Path(file_or_directory).expanduser()
     logger.info(f"ingesting {file_or_directory}")
 
-    adapter = get_dataset_adapter(source_type.value)
+    kwargs = {}
+
+    if n_jobs is not None:
+        kwargs["n_jobs"] = n_jobs
+
+    adapter = get_dataset_adapter(source_type.value, **kwargs)
 
     # Create a data catalog from the specified file or directory
     if not file_or_directory.exists():
@@ -129,7 +139,7 @@ def ingest(
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), file_or_directory)
 
     data_catalog = adapter.find_local_datasets(file_or_directory)
-    adapter.validate_data_catalog(data_catalog)
+    data_catalog = adapter.validate_data_catalog(data_catalog, skip_invalid=skip_invalid)
 
     logger.info(
         f"Found {len(data_catalog)} files for {len(data_catalog[adapter.slug_column].unique())} datasets"

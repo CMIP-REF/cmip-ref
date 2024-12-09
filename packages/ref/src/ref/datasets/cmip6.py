@@ -22,11 +22,45 @@ def _parse_datetime(dt_str: pd.Series[str]) -> pd.Series[datetime | Any]:
     """
     Pandas tries to coerce everything to their own datetime format, which is not what we want here.
     """
+
+    def _inner(date_string: str | None) -> datetime | None:
+        if not date_string:
+            return None
+
+        # Try to parse the date string with and without milliseconds
+        try:
+            dt = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            dt = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S.%f")
+
+        return dt
+
     return pd.Series(
-        [datetime.strptime(dt, "%Y-%m-%d %H:%M:%S") if dt else None for dt in dt_str],
+        [_inner(dt) for dt in dt_str],
         index=dt_str.index,
         dtype="object",
     )
+
+
+def _apply_fixes(data_catalog: pd.DataFrame) -> pd.DataFrame:
+    def _fix_parent_variant_label(group: pd.DataFrame) -> pd.DataFrame:
+        if group["parent_variant_label"].nunique() == 1:
+            return group
+        group["parent_variant_label"] = group["variant_label"].iloc[0]
+
+        return group
+
+    data_catalog = data_catalog.groupby("instance_id").apply(_fix_parent_variant_label).reset_index(drop=True)
+
+    # EC-Earth3 uses "D" as a suffix for the branch_time_in_child and branch_time_in_parent columns
+    data_catalog["branch_time_in_child"] = pd.to_numeric(
+        data_catalog["branch_time_in_child"].astype(str).str.replace("D", ""), errors="raise"
+    )
+    data_catalog["branch_time_in_parent"] = pd.to_numeric(
+        data_catalog["branch_time_in_parent"].astype(str).str.replace("D", ""), errors="raise"
+    )
+
+    return data_catalog
 
 
 class CMIP6DatasetAdapter(DatasetAdapter):
@@ -74,6 +108,9 @@ class CMIP6DatasetAdapter(DatasetAdapter):
     )
 
     file_specific_metadata = ("start_time", "end_time", "path")
+
+    def __init__(self, n_jobs: int = 1):
+        self.n_jobs = n_jobs
 
     def pretty_subset(self, data_catalog: pd.DataFrame) -> pd.DataFrame:
         """
@@ -127,8 +164,7 @@ class CMIP6DatasetAdapter(DatasetAdapter):
             paths=[str(file_or_directory)],
             depth=10,
             include_patterns=["*.nc"],
-            # TODO: This is hardcoded to 1 because of >1 fails during unittests
-            joblib_parallel_kwargs={"n_jobs": 1},
+            joblib_parallel_kwargs={"n_jobs": self.n_jobs},
         ).build(parsing_func=ecgtools.parsers.parse_cmip6)
 
         datasets = builder.df
@@ -152,6 +188,10 @@ class CMIP6DatasetAdapter(DatasetAdapter):
         datasets["instance_id"] = datasets.apply(
             lambda row: "CMIP6." + ".".join([row[item] for item in drs_items]), axis=1
         )
+
+        # Temporary fix for some datasets
+        # TODO: Replace with a standalone package that contains metadata fixes for CMIP6 datasets
+        datasets = _apply_fixes(datasets)
 
         return datasets
 

@@ -11,7 +11,7 @@ from ref.datasets.base import DatasetAdapter
 class MockDatasetAdapter(DatasetAdapter):
     dataset_model: pd.DataFrame
     slug_column: str = "dataset_slug"
-    dataset_specific_metadata: tuple[str, ...] = ("metadata1", "metadata2")
+    dataset_specific_metadata: tuple[str, ...] = ("metadata1", "metadata2", "dataset_slug")
     file_specific_metadata: tuple[str, ...] = ("file_name", "file_size")
 
     def pretty_subset(self, data_catalog: pd.DataFrame) -> pd.DataFrame:
@@ -24,10 +24,11 @@ class MockDatasetAdapter(DatasetAdapter):
             "dataset_slug": [f"{file_or_directory.stem}_001", f"{file_or_directory.stem}_001"],
             "metadata1": ["value1", "value1"],
             "metadata2": ["value2", "value2"],
+            "time_range": ["2020-01-01", "2020-01-01"],
             "file_name": [file_or_directory.name, file_or_directory.name + "_2"],
             "file_size": [100, 100],
         }
-        return pd.DataFrame(data).set_index(self.slug_column)
+        return pd.DataFrame(data)
 
     def register_dataset(self, config, db, data_catalog_dataset: pd.DataFrame) -> pd.DataFrame | None:
         # Returning the input as a stand-in "registered" dataset
@@ -60,20 +61,26 @@ def test_validate_data_catalog_missing_columns():
         adapter.validate_data_catalog(data_catalog.drop(columns=["file_name"]))
 
 
-def test_validate_data_catalog_metadata_variance():
+def test_validate_data_catalog_metadata_variance(caplog):
     adapter = MockDatasetAdapter()
     data_catalog = adapter.find_local_datasets(Path("path/to/dataset"))
     # file_name differs between datasets
-    adapter.dataset_specific_metadata = ("metadata1", "metadata2", "file_name")
+    adapter.dataset_specific_metadata = (*adapter.dataset_specific_metadata, "file_name")
 
-    exp_df = pd.DataFrame(columns=["file_name"], index=["dataset_001"], data=[2])
-    exp_df.index.name = "dataset_slug"
+    exp_message = "Dataset dataset_001 has varying metadata:\n   file_name  time_range\n0    dataset  2020-01-01\n1  dataset_2  2020-01-01"  # noqa: E501
 
     with pytest.raises(
         ValueError,
-        match=f"Dataset specific metadata varies by dataset.\nUnique values: {exp_df}",
+        match="Dataset specific metadata varies by dataset",
     ):
         adapter.validate_data_catalog(data_catalog)
+    assert len(caplog.records) == 1
+    assert caplog.records[0].message == exp_message
+
+    caplog.clear()
+    assert len(adapter.validate_data_catalog(data_catalog, skip_invalid=True)) == 0
+    assert len(caplog.records) == 1
+    assert caplog.records[0].message == exp_message
 
 
 @pytest.mark.parametrize(

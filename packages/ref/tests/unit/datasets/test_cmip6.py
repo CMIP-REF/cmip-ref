@@ -1,7 +1,9 @@
+import datetime
+
 import pandas as pd
 import pytest
 
-from ref.datasets.cmip6 import CMIP6DatasetAdapter
+from ref.datasets.cmip6 import CMIP6DatasetAdapter, _parse_datetime
 
 
 @pytest.fixture
@@ -13,6 +15,16 @@ def catalog_regression(data_regression, esgf_data_dir):
         data_regression.check(df.to_dict(orient="records"), basename=basename)
 
     return check
+
+
+def test_parse_datetime():
+    pd.testing.assert_series_equal(
+        _parse_datetime(pd.Series(["2021-01-01 00:00:00", "1850-01-17 00:29:59.999993", None])),
+        pd.Series(
+            [datetime.datetime(2021, 1, 1, 0, 0), datetime.datetime(1850, 1, 17, 0, 29, 59, 999993), None],
+            dtype="object",
+        ),
+    )
 
 
 class TestCMIP6Adapter:
