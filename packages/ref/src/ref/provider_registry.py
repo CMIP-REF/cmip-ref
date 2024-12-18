@@ -81,8 +81,10 @@ class ProviderRegistry:
             A new ProviderRegistry instance
         """
         # TODO: We don't yet have any tables to represent metrics providers
-        from ref_metrics_example import provider
+        from ref_metrics_esmvaltool import provider as esmvaltool_provider
+        from ref_metrics_example import provider as example_provider
 
         with db.session.begin_nested():
-            _register_provider(db, provider)
-        return ProviderRegistry(providers=[provider])
+            _register_provider(db, example_provider)
+            _register_provider(db, esmvaltool_provider)
+        return ProviderRegistry(providers=[example_provider, esmvaltool_provider])

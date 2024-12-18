@@ -65,6 +65,7 @@ class TestIngest:
                 "--source-type",
                 "cmip6",
                 "--solve",
+                "--dry-run",
             ],
         )
         assert "Solving for metrics that require recalculation." in result.stderr

@@ -1,10 +1,35 @@
+import ref.solver
 from ref.database import Database
 from ref.models import Dataset, MetricExecution
+from ref.provider_registry import ProviderRegistry, _register_provider
 
 
-def test_solve(esgf_data_dir, config, invoke_cli):
+class ExampleProviderRegistry(ProviderRegistry):
+    def build_from_db(db: Database) -> "ExampleProviderRegistry":
+        """
+        Create a ProviderRegistry instance containing only the Example provider.
+
+        Parameters
+        ----------
+        db
+            Database instance
+
+        Returns
+        -------
+        :
+            A new ProviderRegistry instance
+        """
+        # TODO: We don't yet have any tables to represent metrics providers
+        from ref_metrics_example import provider as example_provider
+
+        with db.session.begin_nested():
+            _register_provider(db, example_provider)
+        return ProviderRegistry(providers=[example_provider])
+
+
+def test_solve(esgf_data_dir, config, invoke_cli, monkeypatch):
     db = Database.from_config(config)
-
+    monkeypatch.setattr(ref.solver, "ProviderRegistry", ExampleProviderRegistry)
     invoke_cli(["datasets", "ingest", "--source-type", "cmip6", str(esgf_data_dir)])
     assert db.session.query(Dataset).count() == 5
 

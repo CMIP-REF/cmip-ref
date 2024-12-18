@@ -179,7 +179,7 @@ def test_solve_metrics_default_solver(mock_executor, db_seeded, solver):
     with db_seeded.session.begin():
         solve_metrics(db_seeded)
 
-    assert mock_executor.return_value.run_metric.call_count == 2
+    assert mock_executor.return_value.run_metric.call_count == 3
 
 
 @mock.patch("ref.solver.get_executor")

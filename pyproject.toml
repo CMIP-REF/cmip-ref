@@ -11,6 +11,7 @@ dependencies = [
     "ref[postgres]",
     "ref-core",
     "ref-metrics-example",
+    "ref-metrics-esmvaltool",
 ]
 
 [project.license]
@@ -59,6 +60,7 @@ members = ["packages/*"]
 ref = { workspace = true }
 ref-core = { workspace = true }
 ref-metrics-example = { workspace = true }
+ref-metrics-esmvaltool = { workspace = true }
 
 [tool.coverage.run]
 source = ["packages"]
