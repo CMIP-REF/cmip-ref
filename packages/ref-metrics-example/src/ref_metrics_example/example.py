@@ -120,4 +120,6 @@ class GlobalMeanTimeseries(Metric):
             input_files=input_datasets.path.to_list()
         )
 
-        return MetricResult.build(definition, format_cmec_output_bundle(annual_mean_global_mean_timeseries))
+        return MetricResult.build_from_output_bundle(
+            definition, format_cmec_output_bundle(annual_mean_global_mean_timeseries)
+        )

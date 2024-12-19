@@ -2,6 +2,7 @@ import re
 
 import pandas as pd
 import pytest
+from attr import evolve
 from ref_core.datasets import FacetFilter, SourceDatasetType
 from ref_core.metrics import DataRequirement, MetricExecutionDefinition, MetricResult
 
@@ -11,7 +12,10 @@ class TestMetricResult:
         config = MetricExecutionDefinition(
             output_fragment=tmp_path, key="mocked-metric-slug", metric_dataset=None
         )
-        result = MetricResult.build(config, {"data": "value"})
+        # Setting the output directory generally happens as a side effect of the executor
+        config = evolve(config, output_directory=tmp_path)
+
+        result = MetricResult.build_from_output_bundle(config, {"data": "value"})
 
         assert result.successful
         assert result.output_bundle.exists()

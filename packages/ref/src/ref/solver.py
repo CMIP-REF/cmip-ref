@@ -254,7 +254,9 @@ def solve_metrics(db: Database, dry_run: bool = False, solver: MetricSolver | No
             if metric_execution_model.should_run(info.metric_dataset.hash):
                 logger.info(f"Running metric {metric_execution_model.key}")
                 metric_execution_result = MetricExecutionResult(
-                    metric_execution=metric_execution_model, dataset_hash=info.metric_dataset.hash
+                    metric_execution=metric_execution_model,
+                    dataset_hash=info.metric_dataset.hash,
+                    output_fragment=str(info.output_fragment),
                 )
                 db.session.add(metric_execution_result)
                 db.session.flush()
