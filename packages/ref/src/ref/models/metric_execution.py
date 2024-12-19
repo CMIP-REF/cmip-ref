@@ -98,15 +98,29 @@ class MetricExecutionResult(CreatedUpdatedMixin, Base):
     """
     Represents a run of a metric calculation
 
-    A execution might be run multiple times as new data becomes available.
+    An execution might be run multiple times as new data becomes available.
     """
 
     __tablename__ = "metric_execution_result"
     __table_args__ = (
+        # TODO: This unique constraint is constraining...
+        # If we perform a run with hash A, then run with hash B, then run with hash A again this will fail
+        # This may happen if a dataset is retracted
+        # This will currently result in a IntegrityError so we will know if it ever occurs
         UniqueConstraint("metric_execution_id", "dataset_hash", name="metric_execution_result_ident"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
+
+    output_fragment: Mapped[str] = mapped_column()
+    """
+    Relative directory to store the output of the metric execution.
+
+    During execution this directory is relative to the temporary directory.
+    If the metric execution is successful, the results will be moved to the final output directory
+    and the temporary directory will be cleaned up.
+    This directory may contain multiple input and output files.
+    """
 
     metric_execution_id: Mapped[int] = mapped_column(ForeignKey("metric_execution.id"))
     """

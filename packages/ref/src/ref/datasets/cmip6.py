@@ -50,7 +50,11 @@ def _apply_fixes(data_catalog: pd.DataFrame) -> pd.DataFrame:
 
         return group
 
-    data_catalog = data_catalog.groupby("instance_id").apply(_fix_parent_variant_label).reset_index(drop=True)
+    data_catalog = (
+        data_catalog.groupby("instance_id")
+        .apply(_fix_parent_variant_label, include_groups=False)
+        .reset_index(level="instance_id")
+    )
 
     data_catalog["branch_time_in_child"] = _clean_branch_time(data_catalog["branch_time_in_child"])
     data_catalog["branch_time_in_parent"] = _clean_branch_time(data_catalog["branch_time_in_parent"])
