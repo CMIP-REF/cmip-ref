@@ -10,11 +10,17 @@ from cmip_ref_core.datasets import FacetFilter, MetricDataset, SourceDatasetType
 
 
 @frozen
-class MetricExecutionDefinition:
+class ProposedMetricExecutionDefinition:
     """
-    Definition of a metric execution.
+    A proposed execution of a metric
 
-    This represents the information needed by a metric to perform a single execution of the metric
+    This class represents the information needed by a metric to perform a single execution of the metric.
+    It uses relative paths for any datasets,
+    making it agnostic to the actual data directories used when executing.
+    This allows the class to be used on multiple different systems.
+
+    This can be converted to a concrete `ExecutionDefinition` which is ready to execute,
+    using the `to_metric_execution_definition` method.
     """
 
     key: str
@@ -37,12 +43,60 @@ class MetricExecutionDefinition:
     This is relative to the temporary directory which may differ by executor.
     """
 
-    output_directory: pathlib.Path | None = None
-    """
-    Root directory for output data
+    def to_metric_execution_definition(
+        self, data_directory: pathlib.Path, scratch_directory: pathlib.Path
+    ) -> "MetricExecutionDefinition":
+        """
+        Convert the proposed metric execution definition to a metric execution definition
 
-    This will be resolved by the executor as the output directory may vary depending on where
-    the executor is being run.
+        This converts any relative paths to absolute paths using the system specific directories.
+        This should be done on the node running the metric execution to ensure that the paths
+        are correct for the system.
+
+        Returns
+        -------
+        :
+            Metric execution definition with absolute paths.
+            This definition is ready to be used by a `Metric`
+        """
+        return MetricExecutionDefinition(
+            key=self.key,
+            metric_dataset=self.metric_dataset.to_abs_paths(data_directory),
+            # The executors should write their output to scratch.
+            # This is rather unfortunate naming
+            output_directory=scratch_directory / self.output_fragment,
+        )
+
+
+@frozen
+class MetricExecutionDefinition:
+    """
+    Definition of a metric execution.
+
+    This class represents the information needed by a metric to perform a single execution of the metric.
+    It uses absolute paths for any datasets, making it specific to the system where it is executed.
+    """
+
+    key: str
+    """
+    A unique identifier for the metric execution
+
+    The key is a hash of the group by values for the datasets used in the metric execution.
+    Duplicate keys will occur when new datasets are available that match the same group by values.
+    """
+
+    metric_dataset: MetricDataset
+    """
+    Collection of datasets required for the metric execution
+
+    The `path` field of the datasets should be absolute paths.
+    """
+
+    output_directory: pathlib.Path
+    """
+    Output directory to write results for this metrics
+
+    This is an absolute path within the scratch directory.
     """
 
     def to_output_path(self, filename: str | None) -> pathlib.Path:
@@ -59,13 +113,10 @@ class MetricExecutionDefinition:
         :
             Full path to the file in the output directory
         """
-        if self.output_directory is None:
-            raise AssertionError("Output directory is not set")  # pragma: no cover
-
         if filename is None:
-            return self.output_directory / self.output_fragment
+            return self.output_directory
         else:
-            return self.output_directory / self.output_fragment / filename
+            return self.output_directory / filename
 
 
 @frozen
@@ -301,7 +352,7 @@ class Metric(Protocol):
 
         Parameters
         ----------
-        definition : MetricExecutionDefinition
+        definition
             The configuration to run the metric on.
 
         Returns

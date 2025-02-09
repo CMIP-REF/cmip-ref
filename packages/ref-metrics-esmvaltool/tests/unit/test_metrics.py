@@ -25,10 +25,10 @@ def test_example_metric(tmp_path, mocker, metric_dataset, cmip6_data_catalog):
     metric = GlobalMeanTimeseries()
     ds = cmip6_data_catalog.groupby("instance_id", as_index=False).first()
     output_directory = tmp_path / "output"
+    output_directory.mkdir(parents=True)
 
     definition = MetricExecutionDefinition(
         output_directory=output_directory,
-        output_fragment=tmp_path,
         key="esmvaltool-global-mean-timeseries",
         metric_dataset=MetricDataset(
             {
@@ -37,7 +37,7 @@ def test_example_metric(tmp_path, mocker, metric_dataset, cmip6_data_catalog):
         ),
     )
 
-    result_dir = definition.output_fragment / "results" / "recipe_test_a"
+    result_dir = definition.output_directory / "results" / "recipe_test_a"
     result = result_dir / "work" / "timeseries" / "script1" / "result.nc"
 
     def mock_check_call(cmd, *args, **kwargs):
@@ -61,7 +61,7 @@ def test_example_metric(tmp_path, mocker, metric_dataset, cmip6_data_catalog):
 
     result = metric.run(definition)
 
-    output_bundle_path = definition.output_directory / definition.output_fragment / result.bundle_filename
+    output_bundle_path = definition.output_directory / result.bundle_filename
 
     assert result.successful
     assert output_bundle_path.exists()

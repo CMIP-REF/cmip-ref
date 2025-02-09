@@ -1,20 +1,23 @@
 import re
+from pathlib import Path
 
 import pandas as pd
 import pytest
-from attr import evolve
 
 from cmip_ref_core.datasets import FacetFilter, SourceDatasetType
-from cmip_ref_core.metrics import DataRequirement, MetricExecutionDefinition, MetricResult
+from cmip_ref_core.metrics import (
+    DataRequirement,
+    MetricExecutionDefinition,
+    MetricResult,
+    ProposedMetricExecutionDefinition,
+)
 
 
 class TestMetricResult:
     def test_build_from_output_bundle(self, tmp_path):
         definition = MetricExecutionDefinition(
-            output_fragment=tmp_path, key="mocked-metric-slug", metric_dataset=None
+            output_directory=tmp_path, key="mocked-metric-slug", metric_dataset=None
         )
-        # Setting the output directory generally happens as a side effect of the executor
-        definition = evolve(definition, output_directory=tmp_path)
 
         result = MetricResult.build_from_output_bundle(definition, {"data": "value"})
 
@@ -30,15 +33,36 @@ class TestMetricResult:
 
         assert output_filename.is_relative_to(tmp_path)
 
-    def test_build_from_failure(self):
+    def test_build_from_failure(self, tmp_path):
         definition = MetricExecutionDefinition(
-            output_fragment="output", key="mocked-metric-slug", metric_dataset=None
+            output_directory=tmp_path, key="mocked-metric-slug", metric_dataset=None
         )
         result = MetricResult.build_from_failure(definition)
 
         assert not result.successful
         assert result.bundle_filename is None
         assert result.definition == definition
+
+
+class TestProposedMetricExecutionDefinition:
+    def test_to_metric_execution_definition(self, metric_dataset, mocker):
+        metric_dataset.to_abs_paths = mocker.Mock()
+        proposed_definition = ProposedMetricExecutionDefinition(
+            key="test-key",
+            metric_dataset=metric_dataset,
+            output_fragment=Path("relative/output"),
+        )
+        data_directory = Path("/absolute/data")
+        scratch_directory = Path("/absolute/scratch")
+
+        metric_execution_definition = proposed_definition.to_metric_execution_definition(
+            data_directory=data_directory, scratch_directory=scratch_directory
+        )
+
+        assert metric_execution_definition.key == "test-key"
+
+        assert metric_execution_definition.metric_dataset == metric_dataset.to_abs_paths.return_value
+        assert metric_execution_definition.output_directory == scratch_directory / "relative/output"
 
 
 @pytest.fixture
