@@ -1,118 +1,58 @@
-"""Configuration management"""
+"""
+Configuration management
+
+The REF uses a tiered configuration model,
+where configuration is sourced from a hierarchy of different places.
+
+Each configuration value has a default which is used if not other configuration is available.
+Then configuration is loaded from a `.toml` file which overrides any default values.
+Finally, some configuration can be overridden at runtime using environment variables,
+which always take precedence over any other configuration values.
+"""
 
 # The basics of the configuration management takes a lot of inspiration from the
 # `esgpull` configuration management system with some of the extra complexity removed.
 # https://github.com/ESGF/esgf-download/blob/main/esgpull/config.py
 
-from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 import tomlkit
-from attrs import Factory, define, field, frozen
-from cattrs import ClassValidationError, Converter, ForbiddenExtraKeysError, IterableValidationError
+from attr import Factory
+from attrs import define, field
+from cattrs import Converter
 from cattrs.gen import make_dict_unstructure_fn, override
-from cattrs.v import format_exception as default_format_exception
 from loguru import logger
 from tomlkit import TOMLDocument
 
+from cmip_ref._config_helpers import (
+    _format_exception,
+    _format_key_exception,
+    _pop_empty,
+    config,
+    env_field,
+    transform_error,
+)
 from cmip_ref.constants import config_filename
 from cmip_ref.executor import import_executor_cls
 from cmip_ref_core.env import env
 from cmip_ref_core.exceptions import InvalidExecutorException
 from cmip_ref_core.executor import Executor
 
-
-def _pop_empty(d: dict[str, Any]) -> None:
-    keys = list(d.keys())
-    for key in keys:
-        value = d[key]
-        if isinstance(value, dict):
-            _pop_empty(value)
-            if not value:
-                d.pop(key)
+env_prefix = "REF"
+"""
+Prefix for the environment variables used by the REF
+"""
 
 
-def _format_key_exception(exc: BaseException, _: type | None) -> str | None:
-    """Format a n error exception."""
-    if isinstance(exc, ForbiddenExtraKeysError):
-        return f"extra fields found ({', '.join(exc.extra_fields)})"
-    else:
-        return None
-
-
-def transform_error(
-    exc: ClassValidationError | IterableValidationError | BaseException,
-    path: str = "$",
-    format_exception: Callable[[BaseException, type | None], str | None] = default_format_exception,
-) -> list[str]:
-    """Transform an exception into a list of error messages.
-
-    This is based on [cattrs.transform_error][cattrs.transform_error],
-     but modified to be able to ignore errors
-
-    To get detailed error messages, the exception should be produced by a converter
-    with `detailed_validation` set.
-
-    By default, the error messages are in the form of `{description} @ {path}`.
-
-    While traversing the exception and subexceptions, the path is formed:
-
-    * by appending `.{field_name}` for fields in classes
-    * by appending `[{int}]` for indices in iterables, like lists
-    * by appending `[{str}]` for keys in mappings, like dictionaries
-
-    Parameters
-    ----------
-    exc
-        The exception to transform into error messages.
-    path
-        The root path to use.
-    format_exception
-        A callable to use to transform `Exceptions` into string descriptions of errors.
-    """
-    errors = []
-
-    def _maybe_append_error(exc: BaseException, _: type | None, path: str) -> str | None:
-        error_message = format_exception(exc, None)
-        if error_message:
-            errors.append(f"{error_message} @ {path}")
-        return None
-
-    if isinstance(exc, IterableValidationError):
-        iterable_validation_notes, without = exc.group_exceptions()
-        for inner_exc, iterable_note in iterable_validation_notes:
-            p = f"{path}[{iterable_note.index!r}]"
-            if isinstance(inner_exc, ClassValidationError | IterableValidationError):
-                errors.extend(transform_error(inner_exc, p, format_exception))
-            else:
-                _maybe_append_error(inner_exc, iterable_note.type, p)
-        for inner_exc in without:
-            _maybe_append_error(inner_exc, None, path)
-    elif isinstance(exc, ClassValidationError):
-        class_validation_notes, without = exc.group_exceptions()
-        for inner_exc, class_note in class_validation_notes:
-            p = f"{path}.{class_note.name}"
-            if isinstance(inner_exc, ClassValidationError | IterableValidationError):
-                errors.extend(transform_error(inner_exc, p, format_exception))
-            else:
-                _maybe_append_error(inner_exc, class_note.type, p)
-        for inner_exc in without:
-            _maybe_append_error(inner_exc, None, path)
-    else:
-        _maybe_append_error(exc, None, path)
-
-    return errors
-
-
-@define
+@config(prefix=env_prefix)
 class PathConfig:
     """
     Common paths used by the REF application
     """
 
     # TODO: split data into a per data source configuration
-    data: Path = field(converter=Path)
+    data: Path = env_field(name="DATA_ROOT", converter=Path)
     """
     Root data directory for input data
 
@@ -122,14 +62,14 @@ class PathConfig:
     but does not need to be mounted in the same location on all the metric services.
     """
 
-    log: Path = field(converter=Path)
+    log: Path = env_field(name="LOG_ROOT", converter=Path)
     """
     Directory to store log files from the compute engine
 
     This is not currently used by the REF, but is included for future use.
     """
 
-    scratch: Path = field(converter=Path)
+    scratch: Path = env_field(name="SCRATCH_ROOT", converter=Path)
     """
     Shared scratch space for the REF.
 
@@ -141,7 +81,7 @@ class PathConfig:
     """
 
     # TODO: This could be another data source option
-    results: Path = field(converter=Path)
+    results: Path = env_field(name="RESULTS_ROOT", converter=Path)
     """
     Path to store the results of the metrics
     """
@@ -174,17 +114,18 @@ class PathConfig:
         return env.path("REF_CONFIGURATION") / "results"
 
 
-@frozen
+@config(prefix=env_prefix)
 class ExecutorConfig:
     """
     Configuration to define the executor to use for running metrics
     """
 
-    executor: str = field()
+    executor: str = env_field(name="EXECUTOR", default="cmip_ref.executor.local.LocalExecutor")
     """
     Executor to use for running metrics
 
-    This should be the fully qualified name of the executor class (e.g. `cmip_ref.executor.LocalExecutor`).
+    This should be the fully qualified name of the executor class
+    (e.g. `cmip_ref.executor.local.LocalExecutor`).
     The default is to use the local executor.
     The environment variable `REF_EXECUTOR` takes precedence over this configuration value.
 
@@ -197,10 +138,6 @@ class ExecutorConfig:
 
     See the documentation for the executor for the available configuration options.
     """
-
-    @executor.default
-    def _executor_default(self) -> str:
-        return env.str("REF_EXECUTOR", default="cmip_ref.executor.local.LocalExecutor")
 
     def build(self) -> Executor:
         """
@@ -242,7 +179,7 @@ class MetricsProviderConfig:
     # TODO: Additional configuration for narrowing down the metrics to run
 
 
-@frozen
+@config(prefix=env_prefix)
 class DbConfig:
     """
     Database configuration
@@ -251,7 +188,7 @@ class DbConfig:
     although only SQLite is currently implemented and tested.
     """
 
-    database_url: str = field()
+    database_url: str = env_field(name="DATABASE_URL")
     """
     Database URL that describes the connection to the database.
 
@@ -350,7 +287,7 @@ class Config:
             config = _load_config(config_file, doc)
         except Exception as exc:
             # If that still fails, error out
-            key_validation_errors = transform_error(exc, format_exception=default_format_exception)
+            key_validation_errors = transform_error(exc, format_exception=_format_exception)
             for key_error in key_validation_errors:
                 logger.error(f"Error loading configuration from {config_file}: {key_error}")
 
@@ -361,6 +298,17 @@ class Config:
         config._raw = raw
         config._config_file = config_file
         return config
+
+    def refresh(self) -> "Config":
+        """
+        Refresh the configuration values
+
+        This returns a new instance of the configuration based on the same configuration file and
+        any current environment variables.
+        """
+        if self._config_file is None:
+            raise ValueError("No configuration file specified")
+        return self.load(self._config_file)
 
     def save(self, config_file: Path | None = None) -> None:
         """

@@ -112,6 +112,8 @@ exclude = [
     "conftest.py"
 ]
 mypy_path = "stubs"
+# We need a custom mypy plugin to handle the way we create configuration classes
+plugins = "mypy_plugin.py"
 
 [tool.jupytext]
 formats = "ipynb,py:percent"

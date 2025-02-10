@@ -155,7 +155,7 @@ definition.output_fragment
 #
 # The executor can be specified in the configuration, or
 # using the `REF_EXECUTOR` environment variable which takes precedence.
-# The [LocalExecutor](cmip_ref.executor.local.LocalExecutor) is the default executor,
+# The [LocalExecutor][cmip_ref.executor.local.LocalExecutor] is the default executor,
 # if no other configuration is provided.
 
 # %%

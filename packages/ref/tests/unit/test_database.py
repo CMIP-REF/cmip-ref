@@ -82,6 +82,7 @@ def test_transaction_cleanup(db):
 
 def test_database_invalid_url(config, monkeypatch):
     monkeypatch.setenv("REF_DATABASE_URL", "postgresql:///localhost:12323/cmip_ref")
+    config = config.refresh()
 
     with pytest.raises(sqlalchemy.exc.OperationalError):
         Database.from_config(config, run_migrations=True)

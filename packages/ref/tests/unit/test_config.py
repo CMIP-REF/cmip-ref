@@ -154,6 +154,23 @@ filename = "sqlite://cmip_ref.db"
             "db": {"database_url": "sqlite:///test/db/cmip_ref.db", "run_migrations": True},
         }
 
+    def test_from_env_variables(self, monkeypatch, config):
+        monkeypatch.setenv("REF_DATABASE_URL", "test-database")
+        monkeypatch.setenv("REF_EXECUTOR", "new-executor")
+        monkeypatch.setenv("REF_DATA_ROOT", "/my/test/data")
+        monkeypatch.setenv("REF_SCRATCH_ROOT", "/my/test/scratch")
+        monkeypatch.setenv("REF_LOG_ROOT", "/my/test/logs")
+        monkeypatch.setenv("REF_RESULTS_ROOT", "/my/test/results")
+
+        config_new = config.refresh()
+
+        assert config_new.db.database_url == "test-database"
+        assert config_new.executor.executor == "new-executor"
+        assert config_new.paths.data == Path("/my/test/data")
+        assert config_new.paths.scratch == Path("/my/test/scratch")
+        assert config_new.paths.log == Path("/my/test/logs")
+        assert config_new.paths.results == Path("/my/test/results")
+
     def test_executor_build(self, config):
         executor = config.executor.build()
         assert executor.name == "local"

@@ -22,7 +22,6 @@ from sqlalchemy.orm import Session
 
 from cmip_ref.config import Config
 from cmip_ref.models import Table
-from cmip_ref_core.env import env
 
 
 def validate_database_url(database_url: str) -> str:
@@ -113,7 +112,7 @@ class Database:
         :
             A new Database instance
         """
-        database_url: str = env.str("REF_DATABASE_URL", default=config.db.database_url)
+        database_url: str = config.db.database_url
 
         database_url = validate_database_url(database_url)
         return Database(database_url, run_migrations=run_migrations)
