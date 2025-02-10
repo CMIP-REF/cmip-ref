@@ -21,7 +21,7 @@ from cmip_ref_core.metrics import DataRequirement, MetricExecutionDefinition, Me
 from cmip_ref_core.providers import MetricsProvider
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def sample_data_dir() -> Path:
     return TEST_DATA_DIR / "sample-data"
 
@@ -29,10 +29,10 @@ def sample_data_dir() -> Path:
 @pytest.fixture(autouse=True, scope="session")
 def sample_data() -> None:
     # Downloads the sample data if it doesn't exist
-    fetch_sample_data()
+    fetch_sample_data(force_cleanup=False, symlink=False)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def cmip6_data_catalog(sample_data_dir) -> pd.DataFrame:
     adapter = CMIP6DatasetAdapter()
     return adapter.find_local_datasets(sample_data_dir / "CMIP6")
