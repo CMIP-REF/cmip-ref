@@ -1,6 +1,8 @@
 from loguru import logger
 
 from cmip_ref.config import Config
+from cmip_ref.executor import handle_execution_result
+from cmip_ref.models import MetricExecutionResult
 from cmip_ref_core.metrics import Metric, MetricResult, ProposedMetricExecutionDefinition
 
 
@@ -14,11 +16,17 @@ class LocalExecutor:
     """
 
     name = "local"
+    is_async = False
 
     def __init__(self, config: Config | None = None):
         self.config = Config.default() if config is None else config
 
-    def run_metric(self, metric: Metric, definition: ProposedMetricExecutionDefinition) -> MetricResult:
+    def run_metric(
+        self,
+        metric: Metric,
+        definition: ProposedMetricExecutionDefinition,
+        metric_execution_result: MetricExecutionResult | None = None,
+    ) -> MetricResult:
         """
         Run a metric in process
 
@@ -41,8 +49,12 @@ class LocalExecutor:
         concrete_definition.output_directory.mkdir(parents=True, exist_ok=True)
 
         try:
-            return metric.run(definition=concrete_definition)
-            # TODO: Copy results to the output directory
+            result = metric.run(definition=concrete_definition)
         except Exception:
             logger.exception(f"Error running metric {metric.slug}")
-            return MetricResult.build_from_failure(concrete_definition)
+            result = MetricResult.build_from_failure(concrete_definition)
+
+        if metric_execution_result is not None:
+            handle_execution_result(self.config, metric_execution_result, result)
+
+        return result
