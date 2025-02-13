@@ -1,0 +1,5 @@
+registry: test.txt
+
+tas-Test:
+  sources:
+    tas: test/Test/tas.nc
