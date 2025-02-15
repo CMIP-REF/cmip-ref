@@ -62,7 +62,7 @@ def test_example_metric(tmp_path, cmip6_data_catalog, mocker):
 
 
 def test_standard_metric(tmp_path, cmip6_data_catalog):
-    metric = ILAMBStandard("tas", "test_Test", "test.txt")
+    metric = ILAMBStandard(registry_file="test.txt", sources={"tas": "test/Test/tas.nc"})
     ds = (
         cmip6_data_catalog[
             (cmip6_data_catalog["experiment_id"] == "historical")
