@@ -30,19 +30,14 @@ class MetricExecutionDefinition:
     Collection of datasets required for the metric execution
     """
 
-    output_fragment: pathlib.Path
+    output_directory: pathlib.Path
     """
-    Relative directory to store the output of the metric execution
-
-    This is relative to the temporary directory which may differ by executor.
+    Output directory to store the output of the metric execution
     """
 
-    output_directory: pathlib.Path | None = None
+    _root_directory: pathlib.Path
     """
-    Root directory for output data
-
-    This will be resolved by the executor as the output directory may vary depending on where
-    the executor is being run.
+    Root directory for storing the output of the metric execution
     """
 
     def to_output_path(self, filename: str | None) -> pathlib.Path:
@@ -59,13 +54,21 @@ class MetricExecutionDefinition:
         :
             Full path to the file in the output directory
         """
-        if self.output_directory is None:
-            raise AssertionError("Output directory is not set")  # pragma: no cover
-
         if filename is None:
-            return self.output_directory / self.output_fragment
+            return self.output_directory
         else:
-            return self.output_directory / self.output_fragment / filename
+            return self.output_directory / filename
+
+    def output_fragment(self) -> pathlib.Path:
+        """
+        Get the relative path of the output directory to the root output directory
+
+        Returns
+        -------
+        :
+            Relative path to the output directory
+        """
+        return self.output_directory.relative_to(self._root_directory)
 
 
 @frozen

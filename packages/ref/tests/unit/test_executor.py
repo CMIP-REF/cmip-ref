@@ -2,17 +2,8 @@ import pytest
 
 from cmip_ref.executor import import_executor_cls
 from cmip_ref.executor.local import LocalExecutor
-from cmip_ref_core.datasets import MetricDataset
 from cmip_ref_core.exceptions import InvalidExecutorException
 from cmip_ref_core.executor import Executor
-from cmip_ref_core.metrics import MetricExecutionDefinition
-
-
-@pytest.fixture
-def metric_definition(tmp_path) -> MetricExecutionDefinition:
-    return MetricExecutionDefinition(
-        output_fragment=tmp_path, key="mocked-metric-slug", metric_dataset=MetricDataset({})
-    )
 
 
 def test_import_executor():
@@ -45,8 +36,10 @@ class TestLocalExecutor:
         executor = LocalExecutor()
 
         result = executor.run_metric(mock_metric, metric_definition)
+        # This directory is created by the executor
+        assert metric_definition.output_directory.exists()
         assert result.successful
-        assert result.bundle_filename == metric_definition.output_fragment / "output.json"
+        assert result.bundle_filename == metric_definition.output_directory / "output.json"
 
     def test_raises_exception(self, metric_definition, mock_metric):
         executor = LocalExecutor()

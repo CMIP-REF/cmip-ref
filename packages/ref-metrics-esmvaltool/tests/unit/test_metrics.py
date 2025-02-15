@@ -3,7 +3,6 @@ import pytest
 from cmip_ref_metrics_esmvaltool.metrics import GlobalMeanTimeseries
 
 from cmip_ref_core.datasets import DatasetCollection, MetricDataset, SourceDatasetType
-from cmip_ref_core.metrics import MetricExecutionDefinition
 
 
 @pytest.fixture
@@ -21,23 +20,14 @@ def metric_dataset(cmip6_data_catalog) -> MetricDataset:
     )
 
 
-def test_example_metric(tmp_path, mocker, metric_dataset, cmip6_data_catalog):
+def test_example_metric(mocker, metric_dataset, cmip6_data_catalog, definition_factory):
     metric = GlobalMeanTimeseries()
     ds = cmip6_data_catalog.groupby("instance_id", as_index=False).first()
-    output_directory = tmp_path / "output"
 
-    definition = MetricExecutionDefinition(
-        output_directory=output_directory,
-        output_fragment=tmp_path,
-        key="esmvaltool-global-mean-timeseries",
-        metric_dataset=MetricDataset(
-            {
-                SourceDatasetType.CMIP6: DatasetCollection(ds, "instance_id"),
-            }
-        ),
-    )
+    definition = definition_factory(cmip6=DatasetCollection(ds, "instance_id"))
+    definition.output_directory.mkdir(parents=True)
 
-    result_dir = definition.output_fragment / "results" / "recipe_test_a"
+    result_dir = definition.output_directory / "results" / "recipe_test_a"
     result = result_dir / "work" / "timeseries" / "script1" / "result.nc"
 
     def mock_check_call(cmd, *args, **kwargs):
@@ -61,7 +51,7 @@ def test_example_metric(tmp_path, mocker, metric_dataset, cmip6_data_catalog):
 
     result = metric.run(definition)
 
-    output_bundle_path = definition.output_directory / definition.output_fragment / result.bundle_filename
+    output_bundle_path = definition.output_directory / result.bundle_filename
 
     assert result.successful
     assert output_bundle_path.exists()

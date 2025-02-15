@@ -13,7 +13,8 @@ from cmip_ref_core.executor import Executor
 
 class TestConfig:
     def test_load_missing(self, tmp_path, monkeypatch):
-        monkeypatch.setenv("REF_CONFIGURATION", str(tmp_path / "cmip_ref"))
+        ref_configuration_value = str(tmp_path / "cmip_ref")
+        monkeypatch.setenv("REF_CONFIGURATION", ref_configuration_value)
 
         # The configuration file doesn't exist
         # so it should default to some sane defaults
@@ -21,7 +22,10 @@ class TestConfig:
 
         loaded = Config.load(Path("ref.toml"))
 
-        assert loaded.paths.data == tmp_path / "cmip_ref" / "data"
+        assert loaded.paths.log == tmp_path / "cmip_ref" / "log"
+        assert loaded.paths.scratch == tmp_path / "cmip_ref" / "scratch"
+        assert loaded.paths.results == tmp_path / "cmip_ref" / "results"
+        assert loaded.db.database_url == f"sqlite:///{ref_configuration_value}/db/cmip_ref.db"
 
         # The results aren't serialised back to disk
         assert not (tmp_path / "ref.toml").exists()
@@ -29,12 +33,12 @@ class TestConfig:
         assert loaded._config_file == Path("ref.toml")
 
     def test_default(self, config):
-        config.paths.data = "data"
+        config.paths.scratch = Path("data")
         config.save()
 
         # The default location is overridden in the config fixture
         loaded = Config.default()
-        assert loaded.paths.data == Path("data")
+        assert loaded.paths.scratch == Path("data")
 
     def test_load(self, config, tmp_path):
         res = config.dump(defaults=True)
@@ -74,7 +78,7 @@ filename = "sqlite://cmip_ref.db"
 
     def test_invalid(self, tmp_path, caplog):
         content = """[paths]
-    data = 1
+    scratch = 1
 
     [db]
     filename = "sqlite://cmip_ref.db"
@@ -98,11 +102,11 @@ filename = "sqlite://cmip_ref.db"
             )
         else:
             expected_msg = "expected str, bytes or os.PathLike object, not Integer"
-        assert f"invalid type ({expected_msg}) @ $.paths.data" in caplog.records[1].message
+        assert f"invalid type ({expected_msg}) @ $.paths.scratch" in caplog.records[1].message
         assert caplog.records[1].levelname == "ERROR"
 
     def test_save(self, tmp_path):
-        config = Config(paths=PathConfig(data=Path("data")))
+        config = Config(paths=PathConfig(scratch=Path("scratch")))
 
         with pytest.raises(ValueError):
             # The configuration file hasn't been set as it was created directly
@@ -145,11 +149,9 @@ filename = "sqlite://cmip_ref.db"
             ],
             "executor": {"executor": "cmip_ref.executor.local.LocalExecutor", "config": {}},
             "paths": {
-                "data": "test/data",
                 "log": "test/log",
                 "scratch": "test/scratch",
                 "results": "test/results",
-                "allow_out_of_tree_datasets": True,
             },
             "db": {"database_url": "sqlite:///test/db/cmip_ref.db", "run_migrations": True},
         }
@@ -157,7 +159,6 @@ filename = "sqlite://cmip_ref.db"
     def test_from_env_variables(self, monkeypatch, config):
         monkeypatch.setenv("REF_DATABASE_URL", "test-database")
         monkeypatch.setenv("REF_EXECUTOR", "new-executor")
-        monkeypatch.setenv("REF_DATA_ROOT", "/my/test/data")
         monkeypatch.setenv("REF_SCRATCH_ROOT", "/my/test/scratch")
         monkeypatch.setenv("REF_LOG_ROOT", "/my/test/logs")
         monkeypatch.setenv("REF_RESULTS_ROOT", "/my/test/results")
@@ -166,7 +167,6 @@ filename = "sqlite://cmip_ref.db"
 
         assert config_new.db.database_url == "test-database"
         assert config_new.executor.executor == "new-executor"
-        assert config_new.paths.data == Path("/my/test/data")
         assert config_new.paths.scratch == Path("/my/test/scratch")
         assert config_new.paths.log == Path("/my/test/logs")
         assert config_new.paths.results == Path("/my/test/results")

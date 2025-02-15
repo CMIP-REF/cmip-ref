@@ -242,7 +242,7 @@ class CMIP6DatasetAdapter(DatasetAdapter):
         db.session.flush()
 
         for dataset_file in data_catalog_dataset.to_dict(orient="records"):
-            path = validate_path(config, dataset_file.pop("path"))
+            path = validate_path(dataset_file.pop("path"))
 
             db.session.add(
                 CMIP6File(

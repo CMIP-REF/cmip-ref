@@ -40,7 +40,7 @@ class MetricExecution:
     metric: Metric
     metric_dataset: MetricDataset
 
-    def build_metric_execution_info(self) -> MetricExecutionDefinition:
+    def build_metric_execution_info(self, output_root: pathlib.Path) -> MetricExecutionDefinition:
         """
         Build the metric execution info for the current metric execution
         """
@@ -57,8 +57,12 @@ class MetricExecution:
 
         key = "_".join(key_values)
 
+        # This is the desired path relative to the output directory
+        fragment = pathlib.Path() / self.provider.slug / self.metric.slug / self.metric_dataset.hash
+
         return MetricExecutionDefinition(
-            output_fragment=pathlib.Path(self.provider.slug) / self.metric.slug / self.metric_dataset.hash,
+            root_directory=output_root,
+            output_directory=output_root / fragment,
             key=key,
             metric_dataset=self.metric_dataset,
         )
@@ -223,7 +227,8 @@ def solve_metrics(
     executor = config.executor.build()
 
     for metric_execution in solver.solve():
-        info = metric_execution.build_metric_execution_info()
+        # The metric output is first written to the scratch directory
+        info = metric_execution.build_metric_execution_info(output_root=config.paths.scratch)
 
         logger.debug(f"Identified candidate metric execution {info.key}")
 
@@ -255,7 +260,7 @@ def solve_metrics(
                 metric_execution_result = MetricExecutionResult(
                     metric_execution=metric_execution_model,
                     dataset_hash=info.metric_dataset.hash,
-                    output_fragment=str(info.output_fragment),
+                    output_fragment=str(info.output_directory),
                 )
                 db.session.add(metric_execution_result)
                 db.session.flush()

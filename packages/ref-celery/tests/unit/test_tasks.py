@@ -11,7 +11,9 @@ def test_metric_task_factory():
     # Mock Metric and MetricExecutionDefinition
     mock_metric = Mock()
 
-    definition = MetricExecutionDefinition(key="test", metric_dataset=None, output_fragment=None)
+    definition = MetricExecutionDefinition(
+        key="test", metric_dataset=None, output_directory=None, root_directory=None
+    )
 
     # Create task using factory
     task = metric_task_factory(mock_metric)
