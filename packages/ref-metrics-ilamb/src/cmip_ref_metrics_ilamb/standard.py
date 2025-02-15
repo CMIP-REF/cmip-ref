@@ -15,6 +15,8 @@ from cmip_ref_core.metrics import (
     MetricExecutionDefinition,
     MetricResult,
 )
+from cmip_ref_core.pycmec.metric import CMECMetric
+from cmip_ref_core.pycmec.output import CMECOutput
 from cmip_ref_metrics_ilamb.datasets import (
     ILAMB_DATA_VERSION,
     ILAMBRegistryFile,
@@ -39,34 +41,26 @@ def _build_cmec_bundle(name: str, df: pd.DataFrame) -> dict[str, Any]:
     bundle = {
         "SCHEMA": {"name": "CMEC", "version": "v1", "package": "ILAMB"},
         "DIMENSIONS": {
-            "json_structure": ["region", "model", "metric", "statistic"],
-            "dimensions": {
-                "region": {
-                    r: {
-                        "LongName": "None" if r == "None" else ilamb_regions.get_name(r),
-                        "Description": "Reference data extents" if r == "None" else ilamb_regions.get_name(r),
-                        "Generator": "N/A" if r == "None" else ilamb_regions.get_source(r),
-                    }
-                    for r in df["region"].unique()
-                },
-                "model": {
-                    m: {"Description": m, "Source": m} for m in df["source"].unique() if m != "Reference"
-                },
-                "metric": {
-                    name: {
-                        "Name": name,
-                        "Abstract": "benchmark score",
-                        "URI": [
-                            "https://www.osti.gov/biblio/1330803",
-                            "https://doi.org/10.1029/2018MS001354",
-                        ],
-                        "Contact": "forrest AT climatemodeling.org",
-                    }
-                },
-                "statistic": {
-                    "indices": list(df["name"].unique()),
-                    "short_names": list(df["name"].unique()),
-                },
+            "json_structure": ["region", "model", "metric"],
+            "region": {
+                r: {
+                    "LongName": "None" if r == "None" else ilamb_regions.get_name(r),
+                    "Description": "Reference data extents" if r == "None" else ilamb_regions.get_name(r),
+                    "Generator": "N/A" if r == "None" else ilamb_regions.get_source(r),
+                }
+                for r in df["region"].unique()
+            },
+            "model": {m: {"Description": m, "Source": m} for m in df["source"].unique() if m != "Reference"},
+            "metric": {
+                name: {
+                    "Name": name,
+                    "Abstract": "benchmark score",
+                    "URI": [
+                        "https://www.osti.gov/biblio/1330803",
+                        "https://doi.org/10.1029/2018MS001354",
+                    ],
+                    "Contact": "forrest AT climatemodeling.org",
+                }
             },
         },
         "RESULTS": {
@@ -184,5 +178,14 @@ class ILAMBStandard(Metric):
             out.write(html)
 
         # Write out the bundle
-        bundle = _build_cmec_bundle(definition.key, df)
-        return MetricResult.build_from_output_bundle(definition, bundle)
+        # the following function actually returns the metric bundle
+        metric_bundle = _build_cmec_bundle(definition.key, df)
+        CMECMetric.model_validate(metric_bundle)
+
+        # create a empty CMEC output dictionary
+        output_bundle = CMECOutput.create_template()
+        CMECOutput.model_validate(output_bundle)
+
+        return MetricResult.build_from_output_bundle(
+            definition, cmec_output_bundle=output_bundle, cmec_metric_bundle=metric_bundle
+        )

@@ -6,6 +6,8 @@ import pandas
 
 from cmip_ref_core.datasets import SourceDatasetType
 from cmip_ref_core.metrics import Metric, MetricExecutionDefinition, MetricResult
+from cmip_ref_core.pycmec.metric import CMECMetric
+from cmip_ref_core.pycmec.output import CMECOutput
 from cmip_ref_metrics_esmvaltool.recipe import load_recipe, run_recipe
 from cmip_ref_metrics_esmvaltool.types import OutputBundle, Recipe
 
@@ -64,5 +66,13 @@ class ESMValToolMetric(Metric):
         recipe = load_recipe(self.base_recipe)
         self.update_recipe(recipe, input_files)
         result_dir = run_recipe(recipe, definition)
-        output_bundle = self.format_result(result_dir)
-        return MetricResult.build_from_output_bundle(definition, output_bundle)
+        metric_bundle = self.format_result(result_dir)
+        # validate the metric bundle
+        CMECMetric.model_validate(metric_bundle)
+        # create a empty output bundle
+        output_bundle = CMECOutput.create_template()
+        CMECOutput.model_validate(output_bundle)
+        # cmec_output_bundle and metric_output_bundle are required keyword
+        return MetricResult.build_from_output_bundle(
+            definition, cmec_output_bundle=output_bundle, cmec_metric_bundle=metric_bundle
+        )

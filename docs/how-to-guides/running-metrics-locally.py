@@ -167,7 +167,7 @@ result
 
 # %%
 
-output_file = result.definition.to_output_path(result.bundle_filename)
+output_file = result.definition.to_output_path(result.output_bundle_filename)
 with open(output_file) as fh:
     # Load the output bundle and pretty print
     loaded_result = json.loads(fh.read())

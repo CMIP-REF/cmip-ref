@@ -5,6 +5,8 @@ import xarray as xr
 
 from cmip_ref_core.datasets import FacetFilter, SourceDatasetType
 from cmip_ref_core.metrics import DataRequirement, Metric, MetricExecutionDefinition, MetricResult
+from cmip_ref_core.pycmec.metric import CMECMetric
+from cmip_ref_core.pycmec.output import CMECOutput
 
 
 def calculate_annual_cycle(input_files: list[Path]) -> xr.Dataset:
@@ -50,15 +52,13 @@ def format_cmec_output_bundle(dataset: xr.Dataset) -> dict[str, Any]:
     # TODO: Check how timeseries data are generally serialised
     cmec_output = {
         "DIMENSIONS": {
-            "dimensions": {
-                "source_id": {dataset.attrs["source_id"]: {}},
-                "region": {"global": {}},
-                "variable": {"tas": {}},
-            },
+            "model": {dataset.attrs["source_id"]: {}},
+            "region": {"global": {}},
+            "metric": {"tas": {}},
             "json_structure": [
                 "model",
                 "region",
-                "statistic",
+                "metric",
             ],
         },
         # Is the schema tracked?
@@ -120,6 +120,15 @@ class AnnualCycle(Metric):
 
         annual_mean_global_mean_timeseries = calculate_annual_cycle(input_files=input_datasets.path.to_list())
 
+        # the format function actually returns the metric bundle
+        cmec_metric = format_cmec_output_bundle(annual_mean_global_mean_timeseries)
+        CMECMetric.model_validate(cmec_metric)
+
+        # create a empty CMEC output dictionary
+        cmec_output = CMECOutput.create_template()
+        CMECOutput.model_validate(cmec_output)
+
+        # the cmec_output_bundle and cmec_metric_bundle are required keywords, cannot be omitted
         return MetricResult.build_from_output_bundle(
-            definition, format_cmec_output_bundle(annual_mean_global_mean_timeseries)
+            definition, cmec_output_bundle=cmec_output, cmec_metric_bundle=cmec_metric
         )

@@ -219,7 +219,7 @@ class CMECMetric(BaseModel):
         return self
 
     @validate_call
-    def dump_to_json(self, json_file: str = "./cmec.json") -> None:
+    def dump_to_json(self, json_file: str | pathlib.Path = "./cmec.json") -> None:
         """
         Save the CMECMetric object to a file in JSON format
 

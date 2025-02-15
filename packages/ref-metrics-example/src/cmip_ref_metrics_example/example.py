@@ -5,7 +5,14 @@ import xarray as xr
 
 from cmip_ref_core.constraints import AddSupplementaryDataset
 from cmip_ref_core.datasets import FacetFilter, SourceDatasetType
-from cmip_ref_core.metrics import DataRequirement, Metric, MetricExecutionDefinition, MetricResult
+from cmip_ref_core.metrics import (
+    DataRequirement,
+    Metric,
+    MetricExecutionDefinition,
+    MetricResult,
+)
+from cmip_ref_core.pycmec.metric import CMECMetric
+from cmip_ref_core.pycmec.output import CMECOutput
 
 
 def calculate_annual_mean_timeseries(input_files: list[Path]) -> xr.Dataset:
@@ -49,31 +56,72 @@ def format_cmec_output_bundle(dataset: xr.Dataset) -> dict[str, Any]:
         A CMEC output bundle ready to be written to disk
     """
     # TODO: Check how timeseries data are generally serialised
-    cmec_output = {
+    # All keys listed in the sample are the CMEC keywords.
+    # The value of metrics is the json file following the
+    # CMEC metric bundle standard. Only provenance is required,
+    # others are optional
+
+    # cmec_output = {
+    #    "index": "index.html",
+    #    "provenance": {
+    #        "environment": {},
+    #        "modeldata": [],
+    #        "obsdata": {},
+    #        "log": "cmec_output.log",
+    #    },
+    #    "data": {},
+    #    "html": {},
+    #    "metrics": {},
+    #    "plots": {},
+    # }
+    # create_template will generate the same above dictionary
+    cmec_output = CMECOutput.create_template()
+
+    CMECOutput.model_validate(cmec_output)
+
+    return cmec_output
+
+
+def format_cmec_metric_bundle(dataset: xr.Dataset) -> dict[str, Any]:
+    """
+    Create a simple CMEC metric bundle for the dataset.
+
+    Parameters
+    ----------
+    dataset
+        Processed dataset
+
+    Returns
+    -------
+        A CMEC metric bundle ready to be written to disk
+    """
+    # TODO: Check how timeseries data are generally serialised
+    #
+    # Only DIMENSIONS, json_structure, and RESULTS are the keywords,
+    # other keys are derived from dimensions in json_structure and
+    # the values of dictionaries in DIMENSIONS with the dimension
+    # names as their keys. The order of keys of RESULTS shall
+    # the order of their dimensions in the json_structure
+
+    cmec_metric = {
         "DIMENSIONS": {
-            "dimensions": {
-                "source_id": {dataset.attrs["source_id"]: {}},
-                "region": {"global": {}},
-                "variable": {"tas": {}},
-            },
             "json_structure": [
                 "model",
                 "region",
-                "statistic",
+                "metric",
             ],
-        },
-        # Is the schema tracked?
-        "SCHEMA": {
-            "name": "CMEC-REF",
-            "provider_package": "example",
-            "version": "v1",
+            "model": {dataset.attrs["source_id"]: {}},
+            "region": {"global": {}},
+            "metric": {"tas": {}, "pr": {}},
         },
         "RESULTS": {
-            dataset.attrs["source_id"]: {"global": {"tas": 0}},
+            dataset.attrs["source_id"]: {"global": {"tas": 0, "pr": {"rmse": 0, "mb": 0}}},
         },
     }
 
-    return cmec_output
+    CMECMetric.model_validate(cmec_metric)
+
+    return cmec_metric
 
 
 class GlobalMeanTimeseries(Metric):
@@ -126,5 +174,7 @@ class GlobalMeanTimeseries(Metric):
         )
 
         return MetricResult.build_from_output_bundle(
-            definition, format_cmec_output_bundle(annual_mean_global_mean_timeseries)
+            definition,
+            cmec_output_bundle=format_cmec_output_bundle(annual_mean_global_mean_timeseries),
+            cmec_metric_bundle=format_cmec_metric_bundle(annual_mean_global_mean_timeseries),
         )

@@ -102,15 +102,13 @@ class TransientClimateResponse(ESMValToolMetric):
         source_id = tcr.dataset.values[0].decode("utf-8")
         cmec_output = {
             "DIMENSIONS": {
-                "dimensions": {
-                    "source_id": {source_id: {}},
-                    "region": {"global": {}},
-                    "variable": {"tcr": {}},
-                },
+                "model": {source_id: {}},
+                "region": {"global": {}},
+                "metric": {"tcr": {}},
                 "json_structure": [
                     "model",
                     "region",
-                    "statistic",
+                    "metric",
                 ],
             },
             # Is the schema tracked?

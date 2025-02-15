@@ -129,7 +129,7 @@ class CMECOutput(BaseModel):
         return setattr(self, key, value)
 
     @validate_call
-    def dump_to_json(self, json_path: str = "./cmec_output.json") -> None:
+    def dump_to_json(self, json_path: str | pathlib.Path = "./cmec_output.json") -> None:
         """Save the CMECOutput object to a JSON file in the CMEC format"""
         pathlib.Path(json_path).write_text(self.model_dump_json(indent=2))
 

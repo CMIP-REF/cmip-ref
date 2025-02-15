@@ -61,15 +61,13 @@ class GlobalMeanTimeseries(ESMValToolMetric):
         # TODO: Check how timeseries data are generally serialised
         cmec_output = {
             "DIMENSIONS": {
-                "dimensions": {
-                    "source_id": {dataset.attrs["source_id"]: {}},
-                    "region": {"global": {}},
-                    "variable": {"tas": {}},
-                },
+                "model": {dataset.attrs["source_id"]: {}},
+                "region": {"global": {}},
+                "metric": {"tas": {}},
                 "json_structure": [
                     "model",
                     "region",
-                    "statistic",
+                    "metric",
                 ],
             },
             # Is the schema tracked?

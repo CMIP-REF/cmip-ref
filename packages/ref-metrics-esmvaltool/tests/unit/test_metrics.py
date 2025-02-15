@@ -61,9 +61,18 @@ def test_example_metric(tmp_path, mocker, metric_dataset, cmip6_data_catalog):
 
     result = metric.run(definition)
 
-    output_bundle_path = definition.output_directory / definition.output_fragment / result.bundle_filename
+    output_bundle_path = (
+        definition.output_directory / definition.output_fragment / result.output_bundle_filename
+    )
+    metric_bundle_path = (
+        definition.output_directory / definition.output_fragment / result.metric_bundle_filename
+    )
 
     assert result.successful
     assert output_bundle_path.exists()
     assert output_bundle_path.is_file()
-    assert result.bundle_filename.name == "output.json"
+    assert result.output_bundle_filename.name == "output.json"
+
+    assert metric_bundle_path.exists()
+    assert metric_bundle_path.is_file()
+    assert result.metric_bundle_filename.name == "metric.json"

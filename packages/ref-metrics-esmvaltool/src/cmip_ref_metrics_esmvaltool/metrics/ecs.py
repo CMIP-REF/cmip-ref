@@ -111,17 +111,15 @@ class EquilibriumClimateSensitivity(ESMValToolMetric):
         ecs = xarray.open_dataset(ecs_file)
 
         source_id = ecs.dataset.values[0].decode("utf-8")
-        cmec_output = {
+        cmec_metric = {
             "DIMENSIONS": {
-                "dimensions": {
-                    "source_id": {source_id: {}},
-                    "region": {"global": {}},
-                    "variable": {"ecs": {}},
-                },
+                "model": {source_id: {}},
+                "region": {"global": {}},
+                "metric": {"ecs": {}},
                 "json_structure": [
                     "model",
                     "region",
-                    "statistic",
+                    "metric",
                 ],
             },
             # Is the schema tracked?
@@ -135,4 +133,4 @@ class EquilibriumClimateSensitivity(ESMValToolMetric):
             },
         }
 
-        return cmec_output
+        return cmec_metric
