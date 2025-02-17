@@ -75,11 +75,11 @@ def fetch_sample_data(
     existing_version = None
 
     if output_dir.exists():  # pragma: no branch
-        if version_file.exists():
+        if version_file.exists():  # pragma: no branch
             with open(version_file) as fh:
                 existing_version = fh.read().strip()
 
-        if force_cleanup or existing_version != SAMPLE_DATA_VERSION:
+        if force_cleanup or existing_version != SAMPLE_DATA_VERSION:  # pragma: no branch
             logger.warning("Removing existing sample data")
             shutil.rmtree(output_dir)
 
@@ -90,7 +90,7 @@ def fetch_sample_data(
 
         linked_file = output_dir / key
         linked_file.parent.mkdir(parents=True, exist_ok=True)
-        if not linked_file.exists():
+        if not linked_file.exists():  # pragma: no cover
             if symlink:
                 logger.info(f"Linking {key} to {linked_file}")
 

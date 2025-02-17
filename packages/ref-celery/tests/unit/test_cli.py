@@ -23,6 +23,8 @@ def mock_register_celery_tasks(mocker):
 def test_start_worker_success(mocker, mock_create_celery_app, mock_register_celery_tasks):
     mock_celery_app = mock_create_celery_app.return_value
     mock_provider = mocker.Mock()
+    mock_provider.slug = "example"
+
     mock_import_module = mocker.patch(
         "importlib.import_module", return_value=mocker.Mock(provider=mock_provider)
     )
@@ -32,12 +34,25 @@ def test_start_worker_success(mocker, mock_create_celery_app, mock_register_cele
     assert result.exit_code == 0
     mock_import_module.assert_called_once_with("test_package")
     mock_register_celery_tasks.assert_called_once_with(mock_create_celery_app.return_value, mock_provider)
-    mock_celery_app.worker_main.assert_called_once_with(argv=["worker", "--loglevel=info"])
+    mock_celery_app.worker_main.assert_called_once_with(
+        argv=["worker", "--loglevel=info", "--queues=example"]
+    )
+
+
+def test_start_core_worker_success(mock_create_celery_app, mock_register_celery_tasks):
+    mock_celery_app = mock_create_celery_app.return_value
+
+    result = runner.invoke(app, ["start-worker"])
+
+    assert result.exit_code == 0
+    mock_celery_app.worker_main.assert_called_once_with(argv=["worker", "--loglevel=info", "--queues=celery"])
 
 
 def test_start_worker_success_extra_args(mocker, mock_create_celery_app, mock_register_celery_tasks):
     mock_worker_main = mock_create_celery_app.return_value
     mock_provider = mocker.Mock()
+    mock_provider.slug = "example"
+
     mocker.patch("importlib.import_module", return_value=mocker.Mock(provider=mock_provider))
 
     result = runner.invoke(
@@ -56,7 +71,7 @@ def test_start_worker_success_extra_args(mocker, mock_create_celery_app, mock_re
 
     assert result.exit_code == 0, result.output
     mock_worker_main.worker_main.assert_called_once_with(
-        argv=["worker", "--loglevel=error", "--extra-args", "--concurrency=2"]
+        argv=["worker", "--loglevel=error", "--queues=example", "--extra-args", "--concurrency=2"]
     )
 
 

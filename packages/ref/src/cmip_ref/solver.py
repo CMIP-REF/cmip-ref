@@ -209,13 +209,22 @@ class MetricSolver:
 
 
 def solve_metrics(
-    db: Database, dry_run: bool = False, solver: MetricSolver | None = None, config: Config | None = None
+    db: Database,
+    dry_run: bool = False,
+    solver: MetricSolver | None = None,
+    config: Config | None = None,
+    timeout: int = 60,
 ) -> None:
     """
     Solve for metrics that require recalculation
 
     This may trigger a number of additional calculations depending on what data has been ingested
     since the last solve.
+
+    Raises
+    ------
+    TimeoutError
+        If the execution isn't completed within the specified timeout
     """
     if config is None:
         config = Config.default()
@@ -228,14 +237,19 @@ def solve_metrics(
 
     for metric_execution in solver.solve():
         # The metric output is first written to the scratch directory
-        info = metric_execution.build_metric_execution_info(output_root=config.paths.scratch)
+        definition = metric_execution.build_metric_execution_info(output_root=config.paths.scratch)
 
-        logger.debug(f"Identified candidate metric execution {info.key}")
+        logger.debug(f"Identified candidate metric execution {definition.key}")
 
-        if not dry_run:
+        if dry_run:
+            continue
+
+        # Use a transaction to make sure that the models
+        # are created correctly before potentially executing out of process
+        with db.session.begin(nested=True):
             metric_execution_model, created = db.get_or_create(
                 MetricExecutionModel,
-                key=info.key,
+                key=definition.key,
                 metric_id=db.session.query(MetricModel)
                 .join(MetricModel.provider)
                 .filter(
@@ -252,22 +266,27 @@ def solve_metrics(
             )
 
             if created:
-                logger.info(f"Created metric execution {info.key}")
+                logger.info(f"Created metric execution {definition.key}")
                 db.session.flush()
 
-            if metric_execution_model.should_run(info.metric_dataset.hash):
+            if metric_execution_model.should_run(definition.metric_dataset.hash):
                 logger.info(f"Running metric {metric_execution_model.key}")
                 metric_execution_result = MetricExecutionResult(
                     metric_execution=metric_execution_model,
-                    dataset_hash=info.metric_dataset.hash,
-                    output_fragment=str(info.output_directory),
+                    dataset_hash=definition.metric_dataset.hash,
+                    output_fragment=str(definition.output_fragment()),
                 )
                 db.session.add(metric_execution_result)
                 db.session.flush()
 
                 # Add links to the datasets used in the execution
-                metric_execution_result.register_datasets(db, info.metric_dataset)
+                metric_execution_result.register_datasets(db, definition.metric_dataset)
 
-                executor.run_metric(metric=metric_execution.metric, definition=info)
-                metric_execution_result.successful = True
-                metric_execution_model.dirty = False
+                executor.run_metric(
+                    provider=metric_execution.provider,
+                    metric=metric_execution.metric,
+                    definition=definition,
+                    metric_execution_result=metric_execution_result,
+                )
+    if timeout > 0:
+        executor.join(timeout=timeout)

@@ -200,6 +200,10 @@ def default_metric_providers() -> list[MetricsProviderConfig]:
     :
         List of default metric providers
     """  # noqa: D401
+    env_metric_providers = env.list("REF_METRIC_PROVIDERS", default=None)
+    if env_metric_providers:
+        return [MetricsProviderConfig(provider=provider) for provider in env_metric_providers]
+
     return [
         MetricsProviderConfig(provider="cmip_ref_metrics_esmvaltool.provider", config={}),
         MetricsProviderConfig(provider="cmip_ref_metrics_ilamb.provider", config={}),
@@ -233,8 +237,8 @@ class Config:
     db: DbConfig = Factory(DbConfig)
     executor: ExecutorConfig = Factory(ExecutorConfig)
     metric_providers: list[MetricsProviderConfig] = Factory(default_metric_providers)
-    _raw: TOMLDocument | None = field(init=False, default=None)
-    _config_file: Path | None = field(init=False, default=None)
+    _raw: TOMLDocument | None = field(init=False, default=None, repr=False)
+    _config_file: Path | None = field(init=False, default=None, repr=False)
 
     @classmethod
     def load(cls, config_file: Path, allow_missing: bool = True) -> "Config":

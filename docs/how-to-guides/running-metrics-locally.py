@@ -157,6 +157,7 @@ prettyprinter.pprint(direct_result)
 #
 # Metric calculations are typically run using an [Executor](cmip_ref_core.executor.Executor)
 # which provides an abstraction to enable metrics to be run in multiple different ways.
+# These executors can run metrics locally, on a cluster, or on a remote service
 #
 # The simplest executor is the [LocalExecutor](cmip_ref.executor.local.LocalExecutor).
 # This executor runs a given metric synchronously in the current process.
@@ -170,12 +171,11 @@ prettyprinter.pprint(direct_result)
 executor = config.executor.build()
 metric = provider.get("global-mean-timeseries")
 
-result = executor.run_metric(metric, definition=definition)
-result
+executor.run_metric(provider, metric, definition=definition)
 
 # %%
 
-output_file = result.definition.to_output_path(result.bundle_filename)
+output_file = definition.to_output_path("output.json")
 with open(output_file) as fh:
     # Load the output bundle and pretty print
     loaded_result = json.loads(fh.read())

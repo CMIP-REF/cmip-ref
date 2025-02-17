@@ -1,7 +1,10 @@
 from loguru import logger
 
 from cmip_ref.config import Config
+from cmip_ref.executor import handle_execution_result
+from cmip_ref.models import MetricExecutionResult
 from cmip_ref_core.metrics import Metric, MetricExecutionDefinition, MetricResult
+from cmip_ref_core.providers import MetricsProvider
 
 
 class LocalExecutor:
@@ -15,30 +18,48 @@ class LocalExecutor:
 
     name = "local"
 
-    def __init__(self, config: Config | None = None):
-        self.config = Config.default() if config is None else config
-
-    def run_metric(self, metric: Metric, definition: MetricExecutionDefinition) -> MetricResult:
+    def run_metric(
+        self,
+        provider: MetricsProvider,
+        metric: Metric,
+        definition: MetricExecutionDefinition,
+        metric_execution_result: MetricExecutionResult | None = None,
+    ) -> None:
         """
         Run a metric in process
 
         Parameters
         ----------
+        provider
+            The provider of the metric
         metric
             Metric to run
         definition
             A description of the information needed for this execution of the metric
-
-        Returns
-        -------
-        :
-            Results from running the metric
+        metric_execution_result
+            A database model representing the execution of the metric.
+            If provided, the result will be updated in the database when completed.
         """
         definition.output_directory.mkdir(parents=True, exist_ok=True)
 
         try:
-            return metric.run(definition=definition)
-            # TODO: Copy results to the output directory
+            result = metric.run(definition=definition)
         except Exception:
             logger.exception(f"Error running metric {metric.slug}")
-            return MetricResult.build_from_failure(definition)
+            result = MetricResult.build_from_failure(definition)
+
+        if metric_execution_result:
+            handle_execution_result(Config.default(), metric_execution_result, result)
+
+    def join(self, timeout: float) -> None:
+        """
+        Wait for all metrics to finish
+
+        This returns immediately because the local executor runs metrics synchronously.
+
+        Parameters
+        ----------
+        timeout
+            Timeout in seconds (Not used)
+        """
+        return

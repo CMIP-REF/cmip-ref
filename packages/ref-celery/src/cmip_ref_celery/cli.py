@@ -73,11 +73,14 @@ def start_worker(
 
         # Wrap each metrics in the provider with a celery tasks
         register_celery_tasks(celery_app, provider)
+        queue = provider.slug
     else:
         # This might need some tweaking in later PRs to pull in the appropriate tasks
-        import cmip_ref_celery.tasks  # noqa: F401
+        import cmip_ref_celery.worker_tasks  # noqa: F401
 
-    argv = ["worker", f"--loglevel={loglevel}", *(extra_args or [])]
+        queue = "celery"
+
+    argv = ["worker", f"--loglevel={loglevel}", f"--queues={queue}", *(extra_args or [])]
     celery_app.worker_main(argv=argv)
 
 

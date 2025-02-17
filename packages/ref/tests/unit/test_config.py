@@ -5,8 +5,9 @@ from pathlib import Path
 
 import pytest
 from attr import evolve
+from cattrs import IterableValidationError
 
-from cmip_ref.config import Config, PathConfig
+from cmip_ref.config import Config, PathConfig, transform_error
 from cmip_ref_core.exceptions import InvalidExecutorException
 from cmip_ref_core.executor import Executor
 
@@ -179,7 +180,7 @@ filename = "sqlite://cmip_ref.db"
         # None of the executors support initialisation arguments yet so this is a bit of a placeholder
         config.executor.config["test"] = "value"
 
-        match = re.escape("LocalExecutor.__init__() got an unexpected keyword argument 'test'")
+        match = re.escape("LocalExecutor() takes no arguments")
         with pytest.raises(TypeError, match=match):
             config.executor.build()
 
@@ -189,3 +190,10 @@ filename = "sqlite://cmip_ref.db"
         match = "Expected an Executor, got <class 'cmip_ref.config.DbConfig'>"
         with pytest.raises(InvalidExecutorException, match=match):
             config.executor.build()
+
+
+def test_transform_error():
+    assert transform_error(ValueError("Test error"), "test") == ["invalid value @ test"]
+
+    err = IterableValidationError("Validation error", [ValueError("Test error"), KeyError()], Config)
+    assert transform_error(err, "test") == ["invalid value @ test", "required field missing @ test"]
