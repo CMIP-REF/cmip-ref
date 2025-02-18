@@ -1,0 +1,14 @@
+registry: ilamb.txt
+
+gpp-WECANN:
+  sources:
+    gpp: gpp/WECANN/gpp.nc
+  relationships:
+    pr: pr/GPCPv2.3/pr.nc
+    tas: tas/CRU4.02/tas.nc
+  variable_cmap: Greens
+
+gpp-FLUXNET2015:
+  sources:
+    gpp: gpp/FLUXNET2015/gpp.nc
+  variable_cmap: Greens

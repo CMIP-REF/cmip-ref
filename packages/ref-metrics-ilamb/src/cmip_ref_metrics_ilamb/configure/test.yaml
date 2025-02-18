@@ -1,0 +1,12 @@
+registry: test.txt
+
+tas-Site:
+  sources:
+    tas: test/Site/tas.nc
+
+gpp-Grid:
+  sources:
+    gpp: test/Grid/gpp.nc
+  relationships:
+    pr: test/Grid/pr.nc
+  variable_cmap: Greens

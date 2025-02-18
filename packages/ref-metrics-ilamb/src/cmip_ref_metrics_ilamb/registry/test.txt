@@ -1,1 +1,3 @@
-test/Test/tas.nc sha1:3e757c9feadea581a92e6f4afb402b86168e113a
+test/Site/tas.nc sha1:3e757c9feadea581a92e6f4afb402b86168e113a
+test/Grid/gpp.nc sha1:2688085f95fa13617b20c723c66b0009bd661847
+test/Grid/pr.nc sha1:d667eb216939f5797d59b59cb4ade5ec31e67659
