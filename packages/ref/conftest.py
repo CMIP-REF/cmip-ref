@@ -1,5 +1,4 @@
 import shutil
-import tempfile
 from pathlib import Path
 from urllib import parse as urlparse
 
@@ -30,12 +29,6 @@ def _clone_db(target_db_url: str, template_db_path: Path) -> None:
     target_db_path.parent.mkdir(parents=True)
 
     shutil.copy(template_db_path, target_db_path)
-
-
-@pytest.fixture(scope="session")
-def tmp_path_session():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        yield Path(tmpdir)
 
 
 @pytest.fixture

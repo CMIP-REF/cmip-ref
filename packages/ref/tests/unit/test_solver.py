@@ -5,6 +5,7 @@ import pytest
 from cmip_ref_metrics_example import provider
 
 from cmip_ref.config import ExecutorConfig
+from cmip_ref.models import MetricExecutionResult
 from cmip_ref.provider_registry import ProviderRegistry
 from cmip_ref.solver import MetricExecution, MetricSolver, extract_covered_datasets, solve_metrics
 from cmip_ref_core.constraints import RequireFacets, SelectParentExperiment
@@ -202,12 +203,22 @@ def test_solve_metrics_default_solver(mocker, mock_metric_execution, db_seeded, 
     with db_seeded.session.begin():
         solve_metrics(db_seeded)
 
+    # Check that a result is created
+    assert db_seeded.session.query(MetricExecutionResult).count() == 1
+    execution_result = db_seeded.session.query(MetricExecutionResult).first()
+    assert execution_result.output_fragment == "output_fragment"
+    assert execution_result.dataset_hash == "123456"
+    assert execution_result.metric_execution.key == "key"
+
     # Solver should be created
     assert mock_build_solver.call_count == 1
     # A single run would have been run
     assert mock_executor.return_value.run_metric.call_count == 1
     mock_executor.return_value.run_metric.assert_called_with(
-        metric=mock_metric_execution.metric, definition=mock_metric_execution.build_metric_execution_info()
+        provider=mock_metric_execution.provider,
+        metric=mock_metric_execution.metric,
+        definition=mock_metric_execution.build_metric_execution_info(),
+        metric_execution_result=execution_result,
     )
 
 

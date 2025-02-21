@@ -43,9 +43,15 @@ ENV PATH="/app/.venv/bin:${PATH}"
 
 # Copy the installed packages from the build stage
 COPY --from=build --chown=app:app /app/.venv /app/.venv
+COPY --from=build --chown=app:app /app/scripts /app/scripts
 
 # Location of the REF configuration files
-ENV REF_CONFIGURATION=/app/.ref
+ENV REF_CONFIGURATION=/ref
+ENV REF_METRICS_ILAMB_DATA_DIR=/app/cache/ilamb
+ENV REF_METRICS_ESMVALTOOL_DATA_DIR=/app/cache/esmvaltool
+
+#RUN python /app/scripts/fetch-ilamb-data.py ilamb.txt
+#RUN python /app/scripts/fetch-ilamb-data.py iomb.txt
 
 # Run the REF CLI tool by default
 ENTRYPOINT ["/app/.venv/bin/ref"]
