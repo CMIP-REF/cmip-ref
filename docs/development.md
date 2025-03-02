@@ -52,7 +52,7 @@ this can be modified by changing the `db.database_url` setting in the `ref.toml`
 
 If there are any issues, the messages from the `Makefile` should guide you
 through. If not, please raise an issue in the
-[issue tracker](https://github.com/CMIP-REF/cmip-ref/issues).
+[issue tracker](https://github.com/CLIMATE-REF/climate-ref/issues).
 
 ### Pip editable installation
 
@@ -86,7 +86,7 @@ make test
 
 ### Sample data
 
-We use sample data  from [ref-sample-data](https://github.com/CMIP-REF/ref-sample-data)
+We use sample data  from [ref-sample-data](https://github.com/CLIMATE-REF/ref-sample-data)
 to provide a consistent set of data for testing.
 These data are fetched automatically by the test suite.
 
@@ -162,7 +162,7 @@ allow us to identify where key changes were made.
 We use [towncrier](https://towncrier.readthedocs.io/en/stable/)
 to manage our changelog which involves writing a news fragment
 for each Merge Request that will be added to the [changelog](./changelog.md) on the next release.
-See the [changelog](https://github.com/CMIP-REF/cmip-ref/tree/main/changelog) directory
+See the [changelog](https://github.com/CLIMATE-REF/climate-ref/tree/main/changelog) directory
 for more information about the format of the changelog entries.
 
 ## Dependency management
@@ -220,15 +220,15 @@ but this is something that we will consider in the future.
 The steps required are the following:
 
 1. Bump the version: manually trigger the "bump" workflow from the main branch
-   (see here: [bump workflow](https://github.com/CMIP-REF/cmip-ref/actions/workflows/bump.yaml)).
+   (see here: [bump workflow](https://github.com/CLIMATE-REF/climate-ref/actions/workflows/bump.yaml)).
    A valid "bump_rule" will need to be specified.
    This will then trigger a draft release.
 
 1. Edit the draft release which has been created
-   (see here: [project releases](https://github.com/CMIP-REF/cmip-ref/releases)).
+   (see here: [project releases](https://github.com/CLIMATE-REF/climate-ref/releases)).
    Once you are happy with the release (removed placeholders, added key
    announcements etc.) then hit 'Publish release'.
-   This triggers the [deploy workflow](https://github.com/CMIP-REF/cmip-ref/actions/workflows/deploy.yaml).
+   This triggers the [deploy workflow](https://github.com/CLIMATE-REF/climate-ref/actions/workflows/deploy.yaml).
    This workflow deploys the built wheels and source distributions from the release to PyPI.
 
 

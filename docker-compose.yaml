@@ -1,7 +1,7 @@
 # Services to run the Rapid Evaluation Framework (REF) metric workers
 # These can be started by running `docker-compose up` in the root directory of the codebase.
 
-name: cmip-ref
+name: climate-ref
 services:
   redis:
     image: redis:7

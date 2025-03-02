@@ -15,7 +15,7 @@ These data are stored in a pooch cache outside of the repository.
 
 ## Sample Data
 
-A consistent set of [sample data](https://github.com/CMIP-REF/ref-sample-data)
+A consistent set of [sample data](https://github.com/CLIMATE-REF/ref-sample-data)
 is used by the REF test suite.
 This ensures that the tests are reproducible and that the test data are versioned.
 

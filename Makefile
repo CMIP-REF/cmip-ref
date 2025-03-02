@@ -53,6 +53,10 @@ build: clean  ## build the packages to be deployed to PyPI
 	uv build --package cmip_ref --no-sources
 	uv build --package cmip_ref_core --no-sources
 	uv build --package cmip_ref_celery --no-sources
+	uv build --package cmip_ref_metrics_esmvaltool --no-sources
+	uv build --package cmip_ref_metrics_ilamb --no-sources
+	uv build --package cmip_ref_metrics_pmp --no-sources
+	uv build --package cmip_ref_metrics_example --no-sources
 
 .PHONY: ruff-fixes
 ruff-fixes:  ## fix the code using ruff
@@ -165,4 +169,4 @@ fetch-test-data:  ## Download any data needed by the test suite
 
 .PHONY: update-sample-data-registry
 update-sample-data-registry:  ## Update the sample data registry
-	curl --output packages/ref/src/cmip_ref/datasets/sample_data.txt https://raw.githubusercontent.com/CMIP-REF/ref-sample-data/refs/heads/main/registry.txt
+	curl --output packages/ref/src/cmip_ref/datasets/sample_data.txt https://raw.githubusercontent.com/Climate-REF/ref-sample-data/refs/heads/main/registry.txt

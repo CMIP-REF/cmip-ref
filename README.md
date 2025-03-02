@@ -12,18 +12,18 @@ It is designed to be used as a CI/CD pipeline to provide a quick validation of C
 CMIP REF is a community project, and we welcome contributions from anyone.
 
 
-[![CI](https://github.com/CMIP-REF/cmip-ref/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/CMIP-REF/cmip-ref/actions/workflows/ci.yaml)
-[![Coverage](https://codecov.io/gh/CMIP-REF/cmip-ref/branch/main/graph/badge.svg)](https://codecov.io/gh/CMIP-REF/cmip-ref)
-[![Docs](https://readthedocs.org/projects/cmip-ref/badge/?version=latest)](https://cmip-ref.readthedocs.io)
+[![CI](https://github.com/CLIMATE-REF/climate-ref/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/CLIMATE-REF/climate-ref/actions/workflows/ci.yaml)
+[![Coverage](https://codecov.io/gh/CLIMATE-REF/climate-ref/branch/main/graph/badge.svg)](https://codecov.io/gh/CLIMATE-REF/climate-ref)
+[![Docs](https://readthedocs.org/projects/climate-ref/badge/?version=latest)](https://cmip-ref.readthedocs.io)
 
 **PyPI :**
 [![PyPI](https://img.shields.io/pypi/v/cmip_ref.svg)](https://pypi.org/project/cmip-ref/)
 [![PyPI: Supported Python versions](https://img.shields.io/pypi/pyversions/cmip_ref.svg)](https://pypi.org/project/cmip-ref/)
 
 **Other info :**
-[![Licence](https://img.shields.io/github/license/CMIP-REF/cmip-ref.svg)](https://github.com/CMIP-REF/cmip-ref/blob/main/LICENCE)
-[![Last Commit](https://img.shields.io/github/last-commit/CMIP-REF/cmip-ref.svg)](https://github.com/CMIP-REF/cmip-ref/commits/main)
-[![Contributors](https://img.shields.io/github/contributors/CMIP-REF/cmip-ref.svg)](https://github.com/CMIP-REF/cmip-ref/graphs/contributors)
+[![Licence](https://img.shields.io/github/license/CLIMATE-REF/climate-ref.svg)](https://github.com/CLIMATE-REF/climate-ref/blob/main/LICENCE)
+[![Last Commit](https://img.shields.io/github/last-commit/CLIMATE-REF/climate-ref.svg)](https://github.com/CLIMATE-REF/climate-ref/commits/main)
+[![Contributors](https://img.shields.io/github/contributors/CLIMATE-REF/climate-ref.svg)](https://github.com/CLIMATE-REF/climate-ref/graphs/contributors)
 
 ## Getting started
 

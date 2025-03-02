@@ -5,7 +5,7 @@ filename = "docs/changelog.md"
 directory = "changelog/"
 title_format = "## cmip_ref {version} ({project_date})"
 underlines = ["", "", ""]
-issue_format = "[#{issue}](https://github.com/CMIP-REF/cmip-ref/pulls/{issue})"
+issue_format = "[#{issue}](https://github.com/CLIMATE-REF/climate-ref/pulls/{issue})"
 
   [[tool.towncrier.type]]
   directory = "breaking"

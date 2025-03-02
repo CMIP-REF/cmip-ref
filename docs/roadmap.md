@@ -107,7 +107,7 @@ gantt
 ## Metrics
 
 An overview of the current state of the selected metrics can be found in the
-[Metrics Github board](https://github.com/orgs/CMIP-REF/projects/2/views/2) document.
+[Metrics Github board](https://github.com/orgs/CLIMATE-REF/projects/2/views/2) document.
 This is being updated as the new metrics are integrated into the CMIP AR7 Fast Track REF.
 
 

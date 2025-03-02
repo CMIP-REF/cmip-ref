@@ -35,7 +35,7 @@ but not necesarily the additional packages required to run the metrics.
     type: warning
 
 The conda-forge packages are a work in progress and are not yet available.
-See [#80](https://github.com/CMIP-REF/cmip-ref/issues/80) for more information.
+See [#80](https://github.com/CLIMATE-REF/climate-ref/issues/80) for more information.
 ///
 
 You can install `cmip_ref` using `mamba` or `conda`:
@@ -54,8 +54,8 @@ Pixi uses the same packages as `conda` but is faster and can create reproducible
 You can run `cmip_ref` using Docker. First, build the Docker container from the source code:
 
 ```bash
-git clone https://github.com/CMIP-REF/cmip-ref.git
-cd cmip-ref
+git clone https://github.com/CLIMATE-REF/climate-ref.git
+cd climate-ref
 docker-compose build
 ```
 
@@ -70,8 +70,8 @@ docker-compose up
 To install `cmip_ref` from the source code, clone the repository and install it:
 
 ```bash
-git clone https://github.com/CMIP-REF/cmip-ref.git
-cd cmip-ref
+git clone https://github.com/CLIMATE-REF/climate-ref.git
+cd climate-ref
 make virtual-environment
 ```
 

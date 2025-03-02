@@ -23,7 +23,7 @@ jobs:
     if: "!startsWith(github.event.head_commit.message, 'bump:')"
     runs-on: ubuntu-latest
     env:
-      CI_COMMIT_EMAIL: "ci-runner@cmip-ref.invalid"
+      CI_COMMIT_EMAIL: "ci-runner@climate-ref.invalid"
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
